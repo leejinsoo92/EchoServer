@@ -1,6 +1,6 @@
 //============================================================================
 // Name        : 1.cpp
-// Author      : 
+// Author      :
 // Version     :
 // Copyright   : Your copyright notice
 // Description : Hello World in C++, Ansi-style
@@ -163,7 +163,7 @@ void client_run()
 
 			Packet.m_nCMD ^= Packet.m_nCMD;
 			Packet.m_nCMD |= CMD_USER_DATA_REQ;
-
+			nMemoCmd = CMD_USER_DATA_REQ;
 
 			send(sockfd, (char*) &Packet, sizeof(Packet), 0);
 
@@ -180,6 +180,7 @@ void client_run()
 
 			Packet.m_nCMD ^= Packet.m_nCMD;
 			Packet.m_nCMD |= CMD_USER_SAVE_REQ;
+			nMemoCmd = CMD_USER_SAVE_REQ;
 
 			send(sockfd, (char*) &Packet, sizeof(Packet), 0);
 
@@ -193,6 +194,7 @@ void client_run()
 
 			Packet.m_nCMD ^= Packet.m_nCMD;
 			Packet.m_nCMD |= CMD_USER_DELETE_REQ;
+			nMemoCmd = CMD_USER_DELETE_REQ;
 
 			send(sockfd, (char*) &Packet, sizeof(Packet), 0);
 			break;
@@ -200,6 +202,7 @@ void client_run()
 			iBuf_Len = sizeof(Packet);
 			Packet.m_nCMD ^= Packet.m_nCMD;
 			Packet.m_nCMD |= CMD_USER_PRINT_REQ;
+			nMemoCmd = CMD_USER_PRINT_REQ;
 
 			send(sockfd, (char*) &Packet, sizeof(Packet), 0);
 
