@@ -60,17 +60,31 @@ void CCircularBuffer<T>::Push(T* _data)
 	}
 }
 template <typename T>
-bool CCircularBuffer<T>::Pop()
+T  CCircularBuffer<T>::Pop()
 {
-	if(isEmpty())
-		return false;
-	else
-	{
-		m_iFront = (m_iFront + 1) % m_iBufSize;
-		return true;
-	}
+	int iCur = m_iFront;
+	m_iFront = (m_iFront + 1) % m_iBufSize;
 
+//	cout << "---- Circular Buffer Test Print ----" << endl;
+//	cout << "Current : " << iCur << endl;
+//	cout << "Front   : " << m_iFront << endl;
+
+	return m_tData[iCur];
 }
+
+//template <typename T>
+//T CCircularBuffer<T>::Full_Pop()
+//{
+//	int iCur = m_iFront;
+//
+//	if(isEmpty())
+//		return false;
+//	else
+//	{
+//		m_iFront = (m_iFront + 1) % m_iBufSize;
+//		return m_tData[iCur];
+//	}
+//}
 
 template <typename T>
 void CCircularBuffer<T>::Print()

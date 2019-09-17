@@ -23,7 +23,8 @@ public:
 	bool isEmpty();
 	bool isFull();
 	void Push(T* _data);
-	bool Pop();
+	T  Pop();
+	//T Full_Pop();
 	void Print();
 
 private:
