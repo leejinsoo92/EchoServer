@@ -20,6 +20,56 @@ CServer::~CServer() {
 	// TODO Auto-generated destructor stub
 }
 
+//void* CServer::Thread_Echo_Send(void* arg)
+//{
+//	int iFd = ((CServer*)arg)->iFd;
+//	int m_iEvent_Num = ((CServer*)arg)->m_iEvent_Num;
+//	int Events_Fd = ((CServer*)arg)->m_UserConnMng.m_Events[m_iEvent_Num].data.fd;
+//	static int num = 0;
+//	num = *((int*)arg);
+//
+//	((CServer*)arg)->m_User[iFd].Send(&Events_Fd);
+//
+//	return (void*)&num;
+//}
+
+void* CServer::Thread_Send(void* arg)
+{
+
+
+	int iFd = ((CServer*)arg)->iFd;
+	int m_iEvent_Num = ((CServer*)arg)->m_iEvent_Num;
+	int Events_Fd = ((CServer*)arg)->m_UserConnMng.m_Events[m_iEvent_Num].data.fd;
+	static int num = 0;
+	num = *((int*)arg);
+
+	if(((CServer*)arg)->m_User[iFd].Get_Packet().m_nCMD == CMD_USER_LOGIN_REQ
+			|| ((CServer*)arg)->m_User[iFd].Get_Packet().m_nCMD ==  CMD_USER_DATA_REQ)
+	{
+		((CServer*)arg)->m_User[iFd].Send(&Events_Fd);
+	}
+	else
+	{
+		((CServer*)arg)->m_User[iFd].Send(&Events_Fd, &(((CServer*)arg)->m_PacketList));
+	}
+
+
+	return (void*)&num;
+}
+
+void* CServer::Thread_Recv(void* arg)
+{
+	int iFd = ((CServer*)arg)->iFd;
+	int m_iEvent_Num = ((CServer*)arg)->m_iEvent_Num;
+	int Events_Fd = ((CServer*)arg)->m_UserConnMng.m_Events[m_iEvent_Num].data.fd;
+	static int num = 0;
+	num = *((int*)arg);
+
+	((CServer*)arg)->m_iString_Len = ((CServer*)arg)->m_User[iFd].Recv(&(Events_Fd));
+
+	return (void*)&num;
+}
+
 void CServer::Set_List(PACKET _SetPacket)
 {
 	m_PacketList.push_back(_SetPacket);
@@ -63,6 +113,7 @@ void CServer::Update()
 			else if (m_UserConnMng.m_Events[i].events & EPOLLIN)
 			{
 
+				m_iEvent_Num = i;
 				for(int j = 0; j < USER_NUM; ++j)
 				{
 					if( m_UserConnMng.m_Events[i].data.fd == m_User[j].Get_ConnectSock() )
@@ -75,11 +126,20 @@ void CServer::Update()
 				while (1)
 				{
 					isprint = false;
-					isDelFind = false;
-					isSaveFind = false;
 					switch (m_User[iFd].Get_Packet().m_nCMD)
 					{
 					case CMD_USER_LOGIN_REQ:
+//						---- Thread -----
+//						pthread_attr_init(&attr);
+//						pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+//
+//						m_iThrStatus = pthread_create(&Thread_ID, &attr, Thread_Echo_Send, (void*)this);
+//						if (m_iThrStatus < 0) {
+//							perror("Thread Create Error!!");
+//							exit(0);
+//						}
+//
+//						pthread_attr_destroy(&attr);
 
 						m_User[iFd].Send(&(m_UserConnMng.m_Events[i].data.fd));
 
@@ -89,6 +149,19 @@ void CServer::Update()
 						if (m_iString_Len <= 0) {
 							break;
 						} else {
+//							---- Thread -----
+//							pthread_attr_init(&attr);
+//							pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+//
+//							m_iThrStatus = pthread_create(&Thread_ID, &attr, Thread_Echo_Send, (void*)this);
+//							if(m_iThrStatus < 0)
+//							{
+//								perror("Thread Create Error!!");
+//								exit(0);
+//							}
+//
+//							pthread_attr_destroy(&attr);
+
 							m_User[iFd].Send(&(m_UserConnMng.m_Events[i].data.fd));
 						}
 
@@ -99,8 +172,20 @@ void CServer::Update()
 							break;
 						} else {
 
+//							---- Thread -----
+//							pthread_attr_init(&attr);
+//							pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+//
+//							m_iThrStatus = pthread_create(&Thread_ID, &attr, Thread_Send, (void*)this);
+//							if (m_iThrStatus < 0) {
+//								perror("Thread Create Error!!");
+//								exit(0);
+//							}
+//
+//							pthread_attr_destroy(&attr);
+
 							m_User[iFd].Send(&(m_UserConnMng.m_Events[i].data.fd), &m_PacketList);
-							isSaveFind = false;
+
 							if (!m_PacketList.empty())
 							{
 								for (list<PACKET>::iterator iter = m_PacketList.begin(); iter != m_PacketList.end(); ++iter)
@@ -118,8 +203,19 @@ void CServer::Update()
 						}
 						else
 						{
+//							---- Thread -----
+//							pthread_attr_init(&attr);
+//							pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+//
+//							m_iThrStatus = pthread_create(&Thread_ID, &attr, Thread_Send, (void*)this);
+//							if (m_iThrStatus < 0) {
+//								perror("Thread Create Error!!");
+//								exit(0);
+//							}
+//							pthread_attr_destroy(&attr);
+
 							m_User[iFd].Send(&(m_UserConnMng.m_Events[i].data.fd), &m_PacketList);
-							isDelFind = false;
+
 
 							if (!m_PacketList.empty())
 							{
@@ -133,18 +229,40 @@ void CServer::Update()
 						break;
 					case CMD_USER_PRINT_REQ:
 						if (isprint == true) {
+
 							break;
 						} else {
+//							---- Thread -----
+//							pthread_attr_init(&attr);
+//							pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+//							m_iThrStatus = pthread_create(&Thread_ID, &attr, Thread_Send, (void*)this);
+//							if (m_iThrStatus < 0) {
+//								perror("Thread Create Error!!");
+//								exit(0);
+//							}
+//							pthread_attr_destroy(&attr);
+
 							m_User[iFd].Send(&(m_UserConnMng.m_Events[i].data.fd), &m_PacketList);
 							isprint = true;
 						}
 
 						break;
 					default:
+//						---- Thread -----
+//						pthread_attr_init(&attr);
+//						pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+//						m_iThrStatus = pthread_create(&Thread_ID, &attr, Thread_Recv, (void*)this);
+//						if (m_iThrStatus < 0) {
+//							perror("Thread Create Error!!");
+//							exit(0);
+//						}
+//						pthread_attr_destroy(&attr);
+
 						m_iString_Len = m_User[iFd].Recv(&(m_UserConnMng.m_Events[i].data.fd));
 
 						break;
 					}
+
 
 					if (m_iString_Len <= 0) {
 						break;
