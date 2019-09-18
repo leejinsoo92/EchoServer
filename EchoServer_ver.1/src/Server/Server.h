@@ -23,8 +23,9 @@ public:
 
 public:
 	//static void* Thread_Echo_Send(void* arg);
-	static void* Thread_Send(void* arg);
-	static void* Thread_Recv(void* arg);
+//	static void* Thread_Send(void* arg);
+//	static void* Thread_Recv(void* arg);
+	static void* Thread_Routine(void* arg);
 
 public:
 	void Set_List(PACKET _SetPacket);
@@ -34,7 +35,7 @@ public:
 private:
 	CUserMng 		m_UserConnMng;
 	CUser			m_User[USER_NUM];
-
+	//CUser*			m_User;
 	struct sockaddr_in m_Client_Addr;
 
 private:
@@ -56,6 +57,8 @@ private:
 	bool isDelFind = false;
 	bool isSaveFind = false;
 
+	bool isThrOn = false;
+
 	int iFd = 0;
 
 private:
@@ -63,6 +66,7 @@ private:
 	list<PACKET>	m_PacketList;
 	pthread_t Thread_ID;
 	pthread_attr_t attr;
+
 	int m_iThrStatus = 0;
 };
 
