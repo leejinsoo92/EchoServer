@@ -22,10 +22,9 @@ public:
 	virtual ~CServer();
 
 public:
-	//static void* Thread_Echo_Send(void* arg);
-//	static void* Thread_Send(void* arg);
-//	static void* Thread_Recv(void* arg);
+
 	static void* Thread_Routine(void* arg);
+
 
 public:
 	void Set_List(PACKET _SetPacket);
@@ -33,8 +32,8 @@ public:
 	void Update();
 
 private:
-	CUserMng 		m_UserConnMng;
-	CUser			m_User[USER_NUM];
+	CUserMng* 		m_UserConnMng;
+	CUser*			m_User[USER_NUM];
 	//CUser*			m_User;
 	struct sockaddr_in m_Client_Addr;
 
@@ -58,13 +57,16 @@ private:
 	bool isSaveFind = false;
 
 	bool isThrOn = false;
+	bool isBreak = false;
+
 
 	int iFd = 0;
 
+	int m_iThrStat = 0;
 private:
 	//list<CUser*>	m_UserList;
 	list<PACKET>	m_PacketList;
-	pthread_t Thread_ID;
+	pthread_t Thread_Rout = 0;
 	pthread_attr_t attr;
 
 	int m_iThrStatus = 0;
