@@ -32,8 +32,8 @@ using namespace std;
 #define MAX_EVENTS	32
 #define BUF_SIZE		16
 #define MAX_LINE		256
-//#define SERVER_IP		"192.168.8.37"
-#define SERVER_IP		"127.0.0.1"
+#define SERVER_IP		"192.168.8.39"
+//#define SERVER_IP		"127.0.0.1"
 
 void client_run();
 
@@ -52,6 +52,26 @@ static void set_sockaddr(struct sockaddr_in *addr)
 	addr->sin_port = htons(DEFAULT_PORT);
 }
 
+int RecvFromServer(int sockfd, char* buf, int buf_size)
+{
+	int n, offset = 0;
+	errno = 0;
+
+	while(buf_size - offset > 0 && (n = recv(sockfd, buf + offset, buf_size - offset, MSG_DONTWAIT)) > 0)
+	{
+		offset += n;
+	}
+
+	//&& errno == EAGAIN)
+	if( offset == 0 && errno == EAGAIN )
+	{
+		//cout << "[Client] no message recived." << endl;
+		return -1;
+	}
+	else
+		return offset;
+}
+
 
 void client_run()
 {
@@ -64,7 +84,7 @@ void client_run()
 	char buf[MAX_LINE];
 	char recv_buf[256];
 	struct sockaddr_in srv_addr;
-
+	int numbytes = 0;
 	unsigned short nMemoCmd = 0;
 
 	PACKET Packet;
@@ -88,17 +108,30 @@ void client_run()
 	Packet.m_nCMD ^= Packet.m_nCMD;
 	Packet.m_nCMD |= CMD_USER_LOGIN_REQ;
 
+	string temp = "login request";
+	memcpy(Packet.m_szData, temp.c_str(), temp.length());
+
+	Packet.m_iSize = temp.length();
+
+	//cout << "packet data size : " << Packet.m_iSize << endl;
+
 	send(sockfd, (char*)&Packet, sizeof(Packet), 0);
 
-	while(errno != EAGAIN && (iRecv_Len = recv(sockfd, (char*)&Packet, sizeof(Packet), 0)) > 0)
-	{
-		iBuf_Len -= iRecv_Len;
-		if(iBuf_Len <= 0)
-		{
-			break;
-		}
+//	while(errno != EAGAIN && (iRecv_Len = recv(sockfd, (char*)&Packet, sizeof(Packet), 0)) > 0)
+//	{
+//		iBuf_Len -= iRecv_Len;
+//		if(iBuf_Len <= 0)
+//		{
+//			break;
+//		}
+//
+//	}
 
-	}
+//	if((numbytes = RecvFromServer(sockfd, (char*)&Packet, sizeof(PACKET))) == 0)
+//	{
+//		cout << "[Client] Server Terminated." << endl;
+//		return;
+//	}
 
 	bool isSend = false;
 	int cnt = 0;
@@ -109,7 +142,49 @@ void client_run()
 		//char iInput[256];
 		string iInput;
 		//system("clear");
-		memset(&Packet.m_szData, 0, sizeof(Packet.m_szData));
+		memset(&Packet.m_szData, 0, sizeof(PACKET));
+
+
+		if ((numbytes = RecvFromServer(sockfd, (char*) &Packet, sizeof(PACKET)))
+				== 0) {
+			cout << "[Client] Server Terminated." << endl;
+			return;
+		}
+
+		if ((Packet.m_nCMD == CMD_USER_LOGIN_RESULT)) {
+			cout << "Login Complete!" << endl;
+		} else if ((Packet.m_nCMD == CMD_USER_DATA_RESULT)) {
+
+			cout << "[" << Packet.m_nSock_ID << "]" << "echo  : "
+					<< Packet.m_szData << endl;
+
+		} else if ((Packet.m_nCMD == CMD_USER_SAVE_RESULT)) {
+			cout << "Save Compelete" << endl;
+
+		} else if ((Packet.m_nCMD == CMD_USER_DELETE_RESULT)) {
+			cout << "Delete Compelete" << endl;
+
+		} else if ((Packet.m_nCMD == CMD_USER_PRINT_RESULT)) {
+			if (strcmp(Packet.m_szData, "END") == 0)
+				isSend = false;
+			else
+				cout << "[" << Packet.m_nSock_ID << "]" << "struct  : "
+						<< Packet.m_szData << endl;
+
+		} else if ((Packet.m_nCMD == CMD_USER_ERR)) {
+			if (nMemoCmd == CMD_USER_DATA_REQ) {
+				cout << "Echo Error" << endl;
+			} else if (nMemoCmd == CMD_USER_SAVE_REQ) {
+				cout << "Save Error" << endl;
+			} else if (nMemoCmd == CMD_USER_DELETE_REQ) {
+				cout << "Delete Error" << endl;
+			} else if (nMemoCmd == CMD_USER_PRINT_REQ) {
+				cout << "Print Error" << endl;
+			}
+			nMemoCmd = 0;
+
+		}
+
 
 		if(isSend == false )
 		{
@@ -125,7 +200,6 @@ void client_run()
 			cout << "--------------" << endl;
 			cout << "select : ";
 			cin >> iMenu;
-			isSend = true;
 
 			if( iMenu > 5 || iMenu < 1)
 			{
@@ -134,136 +208,91 @@ void client_run()
 				cout << "Please Enter Again!!" << endl;
 				goto RETURN;
 			}
+			switch (iMenu) {
+			case 1:
+				cout << "Echo input : ";
+				cin.ignore(256, '\n');
+				getline(cin, iInput);
 
-		}
-		else
-		{
-			while(errno != EAGAIN && (iRecv_Len = recv(sockfd, (char*)&Packet, sizeof(Packet), 0)) > 0)
-			{
-				iBuf_Len -= iRecv_Len;
-				if(iBuf_Len <= 0)
-				{
+				Packet.m_nCMD ^= Packet.m_nCMD;
+				Packet.m_nCMD |= CMD_USER_DATA_REQ;
+				nMemoCmd = CMD_USER_DATA_REQ;
 
-					break;
-				}
+				memcpy(Packet.m_szData, iInput.c_str(), iInput.length());
 
+				Packet.m_iSize = iInput.length();
+
+				//cout << "packet data size : " << Packet.m_iSize << endl;
+
+				send(sockfd, (char*) &Packet, sizeof(Packet), 0);
+
+				break;
+			case 2:
+				cout << "Save input : ";
+				cin.ignore(256, '\n');
+				getline(cin, iInput);
+				memcpy(Packet.m_szData, iInput.c_str(), iInput.length());
+
+				cout << "packet data test : " << Packet.m_szData << endl;
+
+				iBuf_Len = sizeof(Packet);
+
+				Packet.m_nCMD ^= Packet.m_nCMD;
+				Packet.m_nCMD |= CMD_USER_SAVE_REQ;
+				nMemoCmd = CMD_USER_SAVE_REQ;
+
+				send(sockfd, (char*) &Packet, sizeof(Packet), 0);
+
+				break;
+			case 3:
+				cout << "Delete input : ";
+				cin.ignore(256, '\n');
+				getline(cin, iInput);
+				memcpy(Packet.m_szData, iInput.c_str(), iInput.length());
+				iBuf_Len = sizeof(Packet);
+
+				Packet.m_nCMD ^= Packet.m_nCMD;
+				Packet.m_nCMD |= CMD_USER_DELETE_REQ;
+				nMemoCmd = CMD_USER_DELETE_REQ;
+
+				send(sockfd, (char*) &Packet, sizeof(Packet), 0);
+				break;
+			case 4:
+				iBuf_Len = sizeof(Packet);
+				Packet.m_nCMD ^= Packet.m_nCMD;
+				Packet.m_nCMD |= CMD_USER_PRINT_REQ;
+				nMemoCmd = CMD_USER_PRINT_REQ;
+
+				send(sockfd, (char*) &Packet, sizeof(Packet), 0);
+				isSend = true;
+				break;
+			case 5:
+				close(sockfd);
+				exit(1);
+				break;
 			}
+
+
 		}
+//		else
+//		{
+////			while(errno != EAGAIN && (iRecv_Len = recv(sockfd, (char*)&Packet, sizeof(Packet), 0)) > 0)
+////			{
+////				iBuf_Len -= iRecv_Len;
+////				if(iBuf_Len <= 0)
+////				{
+////
+////					break;
+////				}
+////
+////			}
+//
+//		}
 
-		switch(iMenu)
-		{
-		case 1:
-			cout << "Echo input : ";
-			cin.ignore(256, '\n');
-			getline(cin, iInput);
-
-			memcpy(Packet.m_szData, iInput.c_str(), iInput.length());
-
-			iBuf_Len = sizeof(Packet);
-
-			Packet.m_nCMD ^= Packet.m_nCMD;
-			Packet.m_nCMD |= CMD_USER_DATA_REQ;
-			nMemoCmd = CMD_USER_DATA_REQ;
-
-			send(sockfd, (char*) &Packet, sizeof(Packet), 0);
-
-			break;
-		case 2:
-			cout << "Save input : ";
-			cin.ignore(256, '\n');
-			getline(cin, iInput);
-			memcpy(Packet.m_szData, iInput.c_str(), iInput.length());
-
-			cout << "packet data test : " << Packet.m_szData << endl;
-
-			iBuf_Len = sizeof(Packet);
-
-			Packet.m_nCMD ^= Packet.m_nCMD;
-			Packet.m_nCMD |= CMD_USER_SAVE_REQ;
-			nMemoCmd = CMD_USER_SAVE_REQ;
-
-			send(sockfd, (char*) &Packet, sizeof(Packet), 0);
-
-			break;
-		case 3:
-			cout << "Delete input : ";
-			cin.ignore(256, '\n');
-			getline(cin, iInput);
-			memcpy(Packet.m_szData, iInput.c_str(), iInput.length());
-			iBuf_Len = sizeof(Packet);
-
-			Packet.m_nCMD ^= Packet.m_nCMD;
-			Packet.m_nCMD |= CMD_USER_DELETE_REQ;
-			nMemoCmd = CMD_USER_DELETE_REQ;
-
-			send(sockfd, (char*) &Packet, sizeof(Packet), 0);
-			break;
-		case 4:
-			iBuf_Len = sizeof(Packet);
-			Packet.m_nCMD ^= Packet.m_nCMD;
-			Packet.m_nCMD |= CMD_USER_PRINT_REQ;
-			nMemoCmd = CMD_USER_PRINT_REQ;
-
-			send(sockfd, (char*) &Packet, sizeof(Packet), 0);
-
-			break;
-		case 5:
-			close(sockfd);
-			exit(1);
-			break;
-		}
 
 
 		//( (Packet.m_nCMD == CMD_USER_LOGIN_RESULT) ||
-		if(isSend == true)
-		{
-			if( (Packet.m_nCMD == CMD_USER_DATA_RESULT) )
-			{
 
-				cout << "[" << Packet.m_nSock_ID << "]" << "echo  : " << Packet.m_szData << endl;
-				isSend = false;
-			}
-			else if((Packet.m_nCMD == CMD_USER_SAVE_RESULT))
-			{
-				cout << "Save Compelete" << endl;
-				isSend = false;
-			}
-			else if((Packet.m_nCMD == CMD_USER_DELETE_RESULT))
-			{
-				cout << "Delete Compelete" << endl;
-				isSend = false;
-			}
-			else if( (Packet.m_nCMD == CMD_USER_PRINT_RESULT))
-			{
-				if(strcmp(Packet.m_szData, "END") == 0)
-					isSend = false;
-				else
-					cout << "[" << Packet.m_nSock_ID << "]" << "struct  : " << Packet.m_szData << endl;
-
-			}
-			else if( (Packet.m_nCMD == CMD_USER_ERR))
-			{
-				if(nMemoCmd == CMD_USER_DATA_REQ)
-				{
-					cout << "Echo Error" << endl;
-				}
-				else if(nMemoCmd == CMD_USER_SAVE_REQ)
-				{
-					cout << "Save Error" << endl;
-				}
-				else if(nMemoCmd == CMD_USER_DELETE_REQ)
-				{
-					cout << "Delete Error" << endl;
-				}
-				else if(nMemoCmd == CMD_USER_PRINT_REQ)
-				{
-					cout << "Print Error" << endl;
-				}
-				nMemoCmd = 0;
-				isSend = false;
-
-			}
-		}
 
 	}
 	close(sockfd);
