@@ -27,6 +27,7 @@ public:
 
 	void Set_ConnectSock(int _Sock){
 		m_iConnectSock = _Sock;
+		cout << "!!!!!!!!connect sock id : " << m_iConnectSock << endl;
 	}
 	int Get_ConnectSock(){
 		return m_iConnectSock;
@@ -36,24 +37,32 @@ public:
 		return m_Packet;
 	}
 
+	bool Get_isRecv(){
+		return m_isRecv;
+	}
+
 public:
 	void Send(int* _fd);
 	void Send(int* _fd, list<PACKET>* _List);
 	int Recv(int* _fd);
 
-	void Update();
+	//bool isPackFull();
+	bool Parsing(int* _fd, list<PACKET>* _List);
+	bool PacketCheck(PACKET data);
 
 private:
 	int m_iConnectSock = 0;
 
 	PACKET m_Packet;
+	//PACKET m_PopPack;
 
 	bool m_isConn = false;
 	bool isprint = false;
 	bool isDelFind = false;
 	bool isSaveFind = false;
+	bool m_isRecv = false;
 private:
-	CCircularBuffer<PACKET> CirBuf;
+	CCircularBuffer<PACKET>* CirBuf;
 	list<PACKET>	m_List;
 };
 
