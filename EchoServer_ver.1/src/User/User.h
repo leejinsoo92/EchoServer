@@ -27,7 +27,7 @@ public:
 
 	void Set_ConnectSock(int _Sock){
 		m_iConnectSock = _Sock;
-		cout << "!!!!!!!!connect sock id : " << m_iConnectSock << endl;
+		//cout << "<< connect sock id : >>	" << m_iConnectSock;
 	}
 	int Get_ConnectSock(){
 		return m_iConnectSock;
@@ -45,9 +45,6 @@ public:
 	void Send(int* _fd);
 	void Send(int* _fd, list<PACKET>* _List);
 	int Recv(int* _fd);
-
-	//bool isPackFull();
-	bool Parsing(int* _fd, list<PACKET>* _List);
 	bool PacketCheck(PACKET data);
 
 private:
