@@ -20,7 +20,7 @@ CEpoll_Manager::~CEpoll_Manager() {
 
 void CEpoll_Manager::Init_Epoll(int* iEpfd)
 {
-	*iEpfd = epoll_create(1);
+	*iEpfd = epoll_create1(0);
 	if( *iEpfd == -1)
 	{
 		cout << "epoll_create() error" << endl;
@@ -31,8 +31,8 @@ void CEpoll_Manager::Init_Epoll(int* iEpfd)
 void CEpoll_Manager::Epoll_Ctl(int* iEpfd, int iOption, int* iFd, uint32_t iEvents)
 {
 	struct epoll_event Ev;
-	Ev.events = iEvents;
 	Ev.data.fd = *iFd;
+	Ev.events = iEvents;
 
 	if(epoll_ctl(*iEpfd, iOption, *iFd, &Ev) == -1)
 	{
@@ -44,10 +44,11 @@ void CEpoll_Manager::Epoll_Ctl(int* iEpfd, int iOption, int* iFd, uint32_t iEven
 
 void CEpoll_Manager::Set_Sockaddr(struct sockaddr_in *addr)
 {
-	bzero((char*)addr, sizeof(struct sockaddr_in));
+	//bzero((char*)addr, sizeof(struct sockaddr_in));
+	memset(addr, 0, sizeof(sockaddr_in));
 	addr->sin_family 			= AF_INET;
-	addr->sin_addr.s_addr 	= INADDR_ANY;
-	addr->sin_port 			= htons(DEFAULT_PORT);
+	addr->sin_addr.s_addr 	= htonl(INADDR_ANY);
+	addr->sin_port 			= ntohs(DEFAULT_PORT);
 }
 
 int CEpoll_Manager::Set_NonBlocking(int* iSockfd)

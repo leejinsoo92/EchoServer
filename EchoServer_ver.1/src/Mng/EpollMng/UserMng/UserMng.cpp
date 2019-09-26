@@ -9,8 +9,6 @@
 #include <iostream>
 
 using namespace std;
-pthread_mutex_t mutex_lock;
-pthread_mutex_t mutex_dellock;
 
 CUserMng::CUserMng() {
 	// TODO Auto-generated constructor stub
@@ -25,19 +23,31 @@ CUserMng::~CUserMng() {
 
 bool CUserMng::Client_Connect(int* _iEpfd, int* _iListen_Scok)
 {
-	*_iListen_Scok = socket(AF_INET, SOCK_STREAM, 0);
-	CEpoll_Manager::Set_Sockaddr(&m_Server_Addr);
-	bind(*_iListen_Scok, (struct sockaddr*)&m_Server_Addr, sizeof(m_Server_Addr));
 
+
+	if( ( *_iListen_Scok = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+	{
+		perror("[+] - ERROR : listen sock Error");
+		return false;
+	}
+
+	CEpoll_Manager::Set_Sockaddr(&m_Server_Addr);
+
+	if( bind(*_iListen_Scok, (struct sockaddr*)&m_Server_Addr, sizeof(m_Server_Addr)) == -1 )
+	{
+		perror("[+] - ERROR : bind Error");
+		return false;
+	}
 	CEpoll_Manager::Set_NonBlocking(_iListen_Scok);
 
 	if( listen(*_iListen_Scok, MAX_CONNECT) == -1 )
+	{
+		perror("[+] - ERROR : listen Error");
 		return false;
-
+	}
 
 	CEpoll_Manager::Init_Epoll(_iEpfd);
-	CEpoll_Manager::Epoll_Ctl(_iEpfd, EPOLL_CTL_ADD, _iListen_Scok, EPOLLIN | EPOLLOUT | EPOLLET);
-
+	CEpoll_Manager::Epoll_Ctl(_iEpfd, EPOLL_CTL_ADD, _iListen_Scok, EPOLLIN);
 	return true;
 }
 
