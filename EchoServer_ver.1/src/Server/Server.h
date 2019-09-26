@@ -23,8 +23,8 @@ public:
 
 public:
 
-	static void* Thread_Routine(void* arg);
-
+	static void* Thread_Worker(void* arg);
+	static void* Thread_UserCheck(void* arg);
 
 public:
 	void Set_List(PACKET _SetPacket);
@@ -42,14 +42,15 @@ private:
 	int m_iEvent_Cnt = 0;
 	int m_iListen_Scok = 0;
 	int m_iConnect_Sock = 0;
+
 	int m_iSock_Len = 0;
+	int m_iClient_Sock = 0;
+	socklen_t m_iAddrsize = 0;
+
 	int m_iString_Len = 0;
 	int m_iData_Len = 0;
 
 	int m_iEvent_Num = 0;
-
-private:
-	int m_iClient_Cnt = 0;
 
 private:
 	bool isprint = false;
@@ -60,13 +61,14 @@ private:
 	bool isBreak = false;
 
 
-	int iFd = 0;
+	int m_iFd = 0;
 
 	int m_iThrStat = 0;
 private:
 	//list<CUser*>	m_UserList;
 	list<PACKET>	m_PacketList;
-	pthread_t Thread_Rout = 0;
+	pthread_t Thread_Work = 0;
+	pthread_t Thread_User = 0;
 	pthread_attr_t attr;
 
 	int m_iThrStatus = 0;

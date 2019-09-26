@@ -32,120 +32,88 @@ CServer::CServer() {
 
 CServer::~CServer() {
 	// TODO Auto-generated destructor stub
+	free(m_UserConnMng);
+	for(int i = 0; i < USER_NUM; ++i)
+	{
+		free(m_User[i]);
+	}
 }
 
-void* CServer::Thread_Routine(void* arg)
+void* CServer::Thread_Worker(void* arg)
 {
 	while(1)
 	{
-		int iFd = ((CServer*)arg)->iFd;
+		//int iFd = ((CServer*)arg)->m_iFd;
 		int m_iEvent_Num = ((CServer*)arg)->m_iEvent_Num;
 		int Events_Fd = (((CServer*) arg)->m_UserConnMng)->m_Events[m_iEvent_Num].data.fd;
 
-	if((((CServer*) arg)->m_UserConnMng)->m_Events[m_iEvent_Num].events & EPOLLIN)
-	{
-		//for(int j = 0; j < USER_NUM; ++j)
+		//if((((CServer*) arg)->m_UserConnMng)->m_Events[m_iEvent_Num].events & EPOLLIN)
 		//{
-		//	if( Events_Fd == (((CServer*) arg)->m_User[j])->Get_ConnectSock() )
-		//	{
-				if( true == (((CServer*) arg)->m_User[iFd])->Get_isRecv() )
-					(((CServer*) arg)->m_User[iFd])->Send(&(Events_Fd), &(((CServer*) arg)->m_PacketList));
-//				iFd = j;
-//				break;
-		//	}
-	//	}
-	}
-		//while (1)
-		//{
-
-////			((CServer*) arg)->m_iString_Len = (((CServer*) arg)->m_User[iFd])->Recv(&(Events_Fd));
-////
-//			if (((CServer*) arg)->m_iString_Len < 0)
-//			{
-//				//pthread_mutex_unlock(&mutex_lock);
-//				break;
-//			}
-//
-//			((CServer*) arg)->isprint = false;
-
-			//pthread_mutex_lock(&mutex_lock);
-
-
-
-			//(((CServer*) arg)->m_UserConnMng)->Epoll_Ctl(&(((CServer*) arg)->m_iEpfd), EPOLL_CTL_MOD, &Events_Fd, EPOLLIN | EPOLLET);
-			//pthread_mutex_unlock(&mutex_lock);
-
-
-//			switch ( (((CServer*) arg)->m_User[iFd])->Get_Packet().m_nCMD)
-//			{
-//			case CMD_USER_LOGIN_REQ:
-//
-//				(((CServer*) arg)->m_User[iFd])->Send(&(Events_Fd));
-//
-//				break;
-//			case CMD_USER_DATA_REQ:
-//
-//				if (((CServer*) arg)->m_iString_Len <= 0) {
-//					break;
-//				} else {
-//
-//					(((CServer*) arg)->m_User[iFd])->Send(&(Events_Fd));
-//				}
-//
-//				break;
-//			case CMD_USER_SAVE_REQ:
-//
-//				if (((CServer*) arg)->m_iString_Len <= 0) {
-//					break;
-//				} else {
-//					(((CServer*) arg)->m_User[iFd])->Send(&(Events_Fd),
-//							&(((CServer*) arg)->m_PacketList));
-//
-//					if (!(((CServer*) arg)->m_PacketList.empty())) {
-//						for (list<PACKET>::iterator iter =
-//								((CServer*) arg)->m_PacketList.begin();
-//								iter != ((CServer*) arg)->m_PacketList.end();
-//								++iter) {
-//							cout << "save data : " << iter->m_szData << endl;
-//
-//						}
-//					}
-//				}
-//
-//				break;
-//			case CMD_USER_DELETE_REQ:
-//
-//				if (((CServer*) arg)->m_iString_Len <= 0) {
-//					break;
-//				} else {
-//					(((CServer*) arg)->m_User[iFd])->Send(&(Events_Fd),
-//							&(((CServer*) arg)->m_PacketList));
-//
-//					if (!(((CServer*) arg)->m_PacketList.empty())) {
-//						for (list<PACKET>::iterator iter =
-//								((CServer*) arg)->m_PacketList.begin();
-//								iter != ((CServer*) arg)->m_PacketList.end();
-//								++iter) {
-//							cout << "Struct Data : " << iter->m_szData << endl;
-//						}
-//					}
-//				}
-//
-//				break;
-//			case CMD_USER_PRINT_REQ:
-//				if (((CServer*) arg)->isprint == true) {
-//					break;
-//				} else {
-//
-//					(((CServer*) arg)->m_User[iFd])->Send(&(Events_Fd),	&(((CServer*) arg)->m_PacketList));
-//					((CServer*) arg)->isprint = true;
-//				}
-//				break;
-//			}
+			for(int i = 0; i < USER_NUM; ++i)
+			{
+				if( true == (((CServer*) arg)->m_User[i])->Get_Connect() )
+				{
+					//pthread_mutex_lock(&mutex_lock);
+					(((CServer*) arg)->m_User[i])->Send(&(Events_Fd), &(((CServer*) arg)->m_PacketList));
+					//pthread_mutex_unlock(&mutex_lock);
+				}
+			}
 
 		//}
+
+//		for(int i = 0; i < USER_NUM; ++i)
+//		{
+//			if( true == (((CServer*) arg)->m_User[i])->Get_Connect() )
+//			{
+//				(((CServer*) arg)->m_User[i])->Send(&(Events_Fd), &(((CServer*) arg)->m_PacketList));
+//			}
+//		}
+
+
 	}
-	//}
+	return NULL;
+}
+
+void* CServer::Thread_UserCheck(void* arg)
+{
+	int iUserCnt = 0;
+	while(1)
+	{
+
+		usleep(1000000);
+		iUserCnt = 0;
+		int iFd = ((CServer*)arg)->m_iFd;
+		int m_iEvent_Num = ((CServer*)arg)->m_iEvent_Num;
+		int Events_Fd = (((CServer*) arg)->m_UserConnMng)->m_Events[m_iEvent_Num].data.fd;
+
+//		if (((CServer*)arg)->m_UserConnMng->m_Events[m_iEvent_Num].events & (EPOLLRDHUP | EPOLLHUP))
+//		{
+//			((CServer*)arg)->m_User[iFd]->Set_Connect(false);
+//			((CServer*)arg)->m_User[iFd]->Set_ConnectSock(0);
+//			epoll_ctl(((CServer*)arg)->m_iEpfd, EPOLL_CTL_DEL, Events_Fd, NULL);
+//			//m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_DEL, &m_UserConnMng->m_Events[i].data.fd, 0);
+//			close(Events_Fd);
+//			cout << "[+] Connection Closed < " << ((CServer*)arg)->m_User[iFd]->Get_Packet().m_szID << " > FD Num ( " << Events_Fd << " )" << endl;
+//
+//		}
+
+		cout << "===========================================" << endl;
+		cout << "                User Check" << endl;
+		cout << "-------------------------------------------" << endl;
+
+		for(int i = 0; i < USER_NUM; ++i)
+		{
+			if( true == (((CServer*) arg)->m_User[i])->Get_Connect() )
+			{
+				iUserCnt++;
+			}
+		}
+		cout << endl;
+		cout << " 현재 접속해 있는 유저 수 : " << iUserCnt << " 명" << endl;
+		cout << endl;
+		cout << "===========================================" << endl;
+	}
+
 	return NULL;
 }
 
@@ -160,83 +128,58 @@ list<PACKET>* CServer::Get_List()
 
 void CServer::Update()
 {
+	//m_iAddrsize = sizeof(&m_iClient_Sock);
+
 	if( m_UserConnMng->Client_Connect(&m_iEpfd, &m_iListen_Scok) == false )
 	{
-		perror("Connect Failed!");
+		perror("[+] - ERROR : Connect Failed");
 		exit(1);
 	}
 
-	m_iSock_Len = sizeof(m_Client_Addr);
+	//pthread_mutex_init(&mutex_lock, NULL);
 
 
-	pthread_mutex_init(&mutex_lock, NULL);
-//	pthread_mutex_init(&mutex_dellock, NULL);
-//
-//	pthread_mutex_init(&sync_mutex, NULL);
-//	pthread_mutex_init(&thread_mutex, NULL);
-//	pthread_cond_init(&sync_cond, NULL);
-//	pthread_cond_init(&thread_cond, NULL);
-
-	//while(1){
-	//pthread_mutex_lock(&sync_mutex);
-//	m_iThrStatus = pthread_create(&Thread_Conn, NULL, Thread_Connect, (void*)this);
-//	if (m_iThrStatus < 0) {
-//		perror("Thread Create Error!!");
-//		exit(0);
-//	}
-//
-//	//pthread_cond_wait(&sync_cond, &sync_mutex);
-//
-//	m_iThrStatus = pthread_create(&Thread_Rout, NULL, Thread_Routine, (void*)this);
-//	if (m_iThrStatus < 0) {
-//		perror("Thread Create Error!!");
-//		exit(0);
-//	}
-//
-//	//pthread_cond_wait(&sync_cond, &sync_mutex);
-//
-//	m_iThrStatus = pthread_create(&Thread_Diconn, NULL, Thread_DisConnect, (void*)this);
-//	if (m_iThrStatus < 0) {
-//		perror("Thread Create Error!!");
-//		exit(0);
-//	}
-//
-//	pthread_join(Thread_Conn, (void**)&m_iThrStat);
-//	pthread_join(Thread_Rout, (void**)&m_iThrStat);
-//	pthread_join(Thread_Diconn, (void**)&m_iThrStat);
-
-	//for(int i = 0; i < 4; ++i)
-	//{
-	m_iThrStatus = pthread_create(&Thread_Rout, NULL, Thread_Routine, (void*)this);
+	m_iThrStatus = pthread_create(&Thread_Work, NULL, Thread_Worker, (void*)this);
 	if (m_iThrStatus < 0) {
-		perror("Thread Create Error!!");
+		perror("Thread Worker Create Error!!");
 		exit(0);
 	}
-	//}
-	pthread_detach(Thread_Rout);
+	pthread_detach(Thread_Work);
+
+	m_iThrStatus = pthread_create(&Thread_User, NULL, Thread_UserCheck, (void*)this);
+	if (m_iThrStatus < 0) {
+		perror("Thread UserCheck Create Error!!");
+		exit(0);
+	}
+	pthread_detach(Thread_User);
 
 	while (1)
 	{
-		//cout << "!!!!!!!!!!!!! EPOLL WAIT !!!!!!!!!!!!!" << endl;
 		m_iEvent_Cnt = epoll_wait(m_iEpfd, m_UserConnMng->m_Events, MAX_EVENTS, -1);
-		isThrOn = false;
+
+		if(m_iEvent_Cnt == -1)
+		{
+			perror("[+] - ERROR : Epoll_Wait Failed");
+			break;
+		}
+
 		for (int i = 0; i < m_iEvent_Cnt; ++i)
 		{
-
+			m_iEvent_Num = i;
 			if (m_UserConnMng->m_Events[i].data.fd == m_iListen_Scok)
 			{
+				//m_iClient_Sock = m_UserConnMng->m_Events[i].data.fd;
+				m_iAddrsize = sizeof(&m_Client_Addr);
+				m_iConnect_Sock = accept(m_iListen_Scok, (struct sockaddr*) &m_Client_Addr, (socklen_t*) &m_iAddrsize);
+				m_UserConnMng->Set_NonBlocking(&m_iConnect_Sock);
+				m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_ADD, &m_iConnect_Sock, EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP);
+				cout << "[+] Connect with" << " : " << ntohs(m_Client_Addr.sin_port) << endl;
 				for(int j = 0; j < 100; ++j)
 				{
 					if(m_User[j]->Get_Connect() == false)
 					{
-						m_iConnect_Sock = accept(m_iListen_Scok, (struct sockaddr*) &m_Client_Addr, (socklen_t*) &m_iSock_Len);
 						m_User[j]->Set_Connect(true);
 						m_User[j]->Set_ConnectSock(m_iConnect_Sock);
-						cout << "[+] Connect with" << " : " << ntohs(m_Client_Addr.sin_port) << endl;
-
-						m_UserConnMng->Set_NonBlocking(&m_iConnect_Sock);
-
-						m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_ADD, &m_iConnect_Sock, EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP);
 						break;
 					}
 				}
@@ -249,188 +192,45 @@ void CServer::Update()
 //							pthread_t id;
 //							id = pthread_self();
 //							cout <<"Thread Routine : " << id << endl;
-				m_iEvent_Num = i;
+
+
 				for(int j = 0; j < USER_NUM; ++j)
 				{
 					if( m_UserConnMng->m_Events[i].data.fd == m_User[j]->Get_ConnectSock() )
 					{
-						iFd = j;
+						m_iFd = j;
+
+						if( -1  == m_User[j]->Recv(&(m_UserConnMng->m_Events[i].data.fd)) )
+						{
+							cout << "Recv Error!!!" << endl;
+							m_User[m_iFd]->Set_Connect(false);
+							m_User[m_iFd]->Set_ConnectSock(0);
+							epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
+							close(m_UserConnMng->m_Events[i].data.fd);
+							cout << "[+] Connection Closed < " << m_User[m_iFd]->Get_Packet().m_szID << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
+						}
 						break;
 					}
 				}
-
-				if( -1  == m_User[iFd]->Recv(&(m_UserConnMng->m_Events[i].data.fd)) )
-				{
-					cout << "Recv Error!!!" << endl;
-				}
-
-//				for(int j = 0; j < USER_NUM; ++j)
-//				{
-//					if( m_UserConnMng->m_Events[i].data.fd == (m_User[j])->Get_ConnectSock() )
-//					{
-//						if( m_User[j]->Recv(&(m_UserConnMng->m_Events[i].data.fd)) == -1 )
-//						{
-//							cout << "Recv Error!!!" << endl;
-//						}
-//					}
-//				}
-
-//				while(1)
-//				{
-//					m_iString_Len = m_User[iFd]->Recv(&(m_UserConnMng->m_Events[i].data.fd));
-//
-//					if (m_iString_Len <= 0)
-//					{
-//						break;
-//					}
-//				}
-
-
-
 
 			}
 			else
 				cout << "[+] Eerror : Unknown epoll evnet" << endl;
 
-//			else if(m_UserConnMng.m_Events[i].events & EPOLLIN)
-//			{
-////				isThrOn = true;
-////				m_iEvent_Num = i;
-////				for(int j = 0; j < USER_NUM; ++j)
-////				{
-////					if( m_UserConnMng.m_Events[i].data.fd == m_User[j].Get_ConnectSock() )
-////					{
-////						iFd = j;
-////						break;
-////					}
-////				}
-//
-//
-//				m_iThrStatus = pthread_create(&Thread_Rout, NULL, Thread_Routine, (void*)this);
-//				cout << "Create Thread_Routine [ " << Thread_Rout << " ] " << endl;
-//				if (m_iThrStatus < 0) {
-//					perror("Thread Create Error!!");
-//					exit(0);
-//				}
-//
-//				//pthread_detach(Thread_ID);
-//			}
-
-			/*
-			else if (m_UserConnMng.m_Events[i].events & EPOLLIN)
-			{
-
-				m_iEvent_Num = i;
-				for(int j = 0; j < USER_NUM; ++j)
-				{
-					if( m_UserConnMng.m_Events[i].data.fd == m_User[j].Get_ConnectSock() )
-					{
-						iFd = j;
-						break;
-					}
-				}
-
-
-				while (1)
-				{
-					isprint = false;
-
-					switch (m_User[iFd].Get_Packet().m_nCMD)
-					{
-					case CMD_USER_LOGIN_REQ:
-						m_User[iFd].Send(&(m_UserConnMng.m_Events[i].data.fd));
-
-						break;
-					case CMD_USER_DATA_REQ:
-
-						if (m_iString_Len <= 0) {
-							break;
-						} else {
-							m_User[iFd].Send(&(m_UserConnMng.m_Events[i].data.fd));
-						}
-
-						break;
-					case CMD_USER_SAVE_REQ:
-
-						if (m_iString_Len <= 0) {
-
-							break;
-						} else {
-							m_User[iFd].Send(&(m_UserConnMng.m_Events[i].data.fd), &m_PacketList);
-
-							if (!m_PacketList.empty())
-							{
-								for (list<PACKET>::iterator iter = m_PacketList.begin(); iter != m_PacketList.end(); ++iter)
-								{
-									cout << "save data : " << iter->m_szData << endl;
-
-								}
-							}
-						}
-
-						break;
-					case CMD_USER_DELETE_REQ:
-
-						if (m_iString_Len <= 0) {
-
-							break;
-						}
-						else
-						{
-							m_User[iFd].Send(&(m_UserConnMng.m_Events[i].data.fd), &m_PacketList);
-
-
-							if (!m_PacketList.empty())
-							{
-								for (list<PACKET>::iterator iter = m_PacketList.begin(); iter != m_PacketList.end(); ++iter)
-								{
-									cout << "Struct Data : " << iter->m_szData << endl;
-								}
-							}
-						}
-
-						break;
-					case CMD_USER_PRINT_REQ:
-						if (isprint == true) {
-
-							break;
-						} else {
-							m_User[iFd].Send(&(m_UserConnMng.m_Events[i].data.fd), &m_PacketList);
-							isprint = true;
-						}
-
-						break;
-					default:
-						m_iString_Len = m_User[iFd].Recv(&(m_UserConnMng.m_Events[i].data.fd));
-						break;
-					}
-
-
-					if (m_iString_Len <= 0) {
-						break;
-					}
-
-				}
-
-			}
-			else
-				cout << "[+] Unexpected" << endl;*/
-
-
 
 			if (m_UserConnMng->m_Events[i].events & (EPOLLRDHUP | EPOLLHUP))
 			{
-				cout << "[+] Connection Closed < " << m_User[iFd]->Get_Packet().m_szID << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
-				m_User[iFd]->Set_Connect(false);
-				m_User[iFd]->Set_ConnectSock(0);
-				m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_DEL, &m_UserConnMng->m_Events[i].data.fd, 0);
+				m_User[m_iFd]->Set_Connect(false);
+				m_User[m_iFd]->Set_ConnectSock(0);
+				epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
+				//m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_DEL, &m_UserConnMng->m_Events[i].data.fd, 0);
 				close(m_UserConnMng->m_Events[i].data.fd);
-
+				cout << "[+] Connection Closed < " << m_User[m_iFd]->Get_Packet().m_szID << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
 				break;
 			}
 		}
 	}
 
 	//for(int i = 0; i < 4; ++i)
-		//pthread_join(Thread_Rout, (void**)&m_iThrStat);
+	//	pthread_join(Thread_Rout, (void**)&m_iThrStat);
 }
