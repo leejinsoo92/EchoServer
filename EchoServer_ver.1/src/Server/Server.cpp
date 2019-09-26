@@ -54,7 +54,7 @@ void* CServer::Thread_Worker(void* arg)
 				if( true == (((CServer*) arg)->m_User[i])->Get_Connect() )
 				{
 					//pthread_mutex_lock(&mutex_lock);
-					(((CServer*) arg)->m_User[i])->Send(&(Events_Fd), &(((CServer*) arg)->m_PacketList));
+					(((CServer*) arg)->m_User[i])->Send(&(((CServer*) arg)->m_iClient_Sock), &(((CServer*) arg)->m_PacketList));
 					//pthread_mutex_unlock(&mutex_lock);
 				}
 			}
@@ -88,13 +88,15 @@ void* CServer::Thread_UserCheck(void* arg)
 
 //		if (((CServer*)arg)->m_UserConnMng->m_Events[m_iEvent_Num].events & (EPOLLRDHUP | EPOLLHUP))
 //		{
-//			((CServer*)arg)->m_User[iFd]->Set_Connect(false);
-//			((CServer*)arg)->m_User[iFd]->Set_ConnectSock(0);
-//			epoll_ctl(((CServer*)arg)->m_iEpfd, EPOLL_CTL_DEL, Events_Fd, NULL);
-//			//m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_DEL, &m_UserConnMng->m_Events[i].data.fd, 0);
-//			close(Events_Fd);
-//			cout << "[+] Connection Closed < " << ((CServer*)arg)->m_User[iFd]->Get_Packet().m_szID << " > FD Num ( " << Events_Fd << " )" << endl;
-//
+//			for(int i = 0; i < USER_NUM; ++i)
+//			{
+//				((CServer*)arg)->m_User[i]->Set_Connect(false);
+//				((CServer*)arg)->m_User[i]->Set_ConnectSock(0);
+//				//epoll_ctl(((CServer*)arg)->m_iEpfd, EPOLL_CTL_DEL, Events_Fd, NULL);
+//				((CServer*)arg)->m_UserConnMng->Epoll_Ctl(&(((CServer*)arg)->m_iEpfd), EPOLL_CTL_DEL, &Events_Fd, 0);
+//				close(Events_Fd);
+//				cout << "[+] Connection Closed < " << ((CServer*)arg)->m_User[i]->Get_Packet().m_szID << " > FD Num ( " << Events_Fd << " )" << endl;
+//			}
 //		}
 
 		cout << "===========================================" << endl;
@@ -106,6 +108,7 @@ void* CServer::Thread_UserCheck(void* arg)
 			if( true == (((CServer*) arg)->m_User[i])->Get_Connect() )
 			{
 				iUserCnt++;
+				cout << "ID :" << ((CServer*) arg)->m_User[i]->Get_Packet().m_szID << endl;
 			}
 		}
 		cout << endl;
@@ -166,6 +169,7 @@ void CServer::Update()
 		for (int i = 0; i < m_iEvent_Cnt; ++i)
 		{
 			m_iEvent_Num = i;
+			m_iClient_Sock = m_UserConnMng->m_Events[i].data.fd;
 			if (m_UserConnMng->m_Events[i].data.fd == m_iListen_Scok)
 			{
 				//m_iClient_Sock = m_UserConnMng->m_Events[i].data.fd;
@@ -220,13 +224,19 @@ void CServer::Update()
 
 			if (m_UserConnMng->m_Events[i].events & (EPOLLRDHUP | EPOLLHUP))
 			{
-				m_User[m_iFd]->Set_Connect(false);
-				m_User[m_iFd]->Set_ConnectSock(0);
-				epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
-				//m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_DEL, &m_UserConnMng->m_Events[i].data.fd, 0);
-				close(m_UserConnMng->m_Events[i].data.fd);
-				cout << "[+] Connection Closed < " << m_User[m_iFd]->Get_Packet().m_szID << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
-				break;
+				for(int j = 0; j < USER_NUM; ++j)
+				{
+					if( m_UserConnMng->m_Events[i].data.fd == m_User[j]->Get_ConnectSock() )
+					{
+						m_User[m_iFd]->Set_Connect(false);
+						m_User[m_iFd]->Set_ConnectSock(0);
+						epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
+						//m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_DEL, &m_UserConnMng->m_Events[i].data.fd, 0);
+						close(m_UserConnMng->m_Events[i].data.fd);
+						cout << "[+] Connection Closed < " << m_User[m_iFd]->Get_Packet().m_szID << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
+						break;
+					}
+				}
 			}
 		}
 	}
