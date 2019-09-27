@@ -47,6 +47,7 @@ bool CUserMng::Client_Connect(int* _iEpfd, int* _iListen_Scok)
 	}
 
 	CEpoll_Manager::Init_Epoll(_iEpfd);
+	m_Events = (struct epoll_event *)malloc(sizeof MAX_EVENTS);
 	CEpoll_Manager::Epoll_Ctl(_iEpfd, EPOLL_CTL_ADD, _iListen_Scok, EPOLLIN);
 	return true;
 }

@@ -26,7 +26,8 @@ private:
 	struct sockaddr_in m_Server_Addr;
 
 public:
-	struct epoll_event m_Events[MAX_EVENTS];
+	//struct epoll_event m_Events[MAX_EVENTS];
+	struct epoll_event* m_Events;
 };
 
 #endif /* USERMNG_USERMNG_H_ */

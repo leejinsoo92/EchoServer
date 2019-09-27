@@ -21,9 +21,9 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define MAX_EVENTS 		20
+#define MAX_EVENTS 		32
 #define DEFAULT_PORT		8080
-#define MAX_CONNECT		20
+#define MAX_CONNECT		5
 
 class CEpoll_Manager
 {
