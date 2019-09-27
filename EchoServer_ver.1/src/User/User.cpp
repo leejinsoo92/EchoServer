@@ -14,18 +14,22 @@
 
 CUser::CUser() {
 	// TODO Auto-generated constructor stub
-	CirBuf = new CCircularBuffer<PACKET>(20);
+	m_iCirbufSize = 50;
+	CirBuf = new CCircularBuffer<PACKET>(m_iCirbufSize);
+	m_isConn = false;
 }
 
 CUser::~CUser() {
 	// TODO Auto-generated destructor stub
+//	delete[] CirBuf;
+//	CirBuf = nullptr;
 }
 
 void CUser::Send(int* _fd)
 {
 	isprint = false;
 
-	m_Packet = CirBuf->Pop();
+	//m_Packet = CirBuf->Pop();
 
 	switch (m_Packet.m_nCMD)
 	{
@@ -49,33 +53,39 @@ void CUser::Send(int* _fd)
 
 void CUser::Send(int* _fd, list<PACKET>* _List)
 {
-
 	isDelFind = false;
 	isSaveFind = false;
 
-	//m_Packet = CirBuf->Pop();
+	PACKET PacketCpy;
+	if( CirBuf->isEmpty() == false )
+	{
+		memcpy(&PacketCpy, CirBuf->Pop(), sizeof(PACKET));
+		CirBuf->Print();
+	}
 
-	//if(true == PacketCheck(m_Packet))
-	//{
-		//cout << "< " << m_Packet.m_nSock_ID << " > " << endl;
-		//cout << "Send to Client this data : ' " << m_Packet.m_szData << " '" << endl;
-		switch (m_Packet.m_nCMD)
+	if(true == PacketCheck(PacketCpy))
+	{
+		memset(&m_Packet, 0, sizeof(PACKET));
+		memcpy(&m_Packet, &PacketCpy, sizeof(PACKET));
+		CirBuf->ChangeFront();
+
+		switch (PacketCpy.m_nCMD)
 		{
 		case CMD_USER_LOGIN_REQ:
 
-			cout << "< " << m_Packet.m_nSock_ID << " : " << m_Packet.m_szID << " > Login Complete!" << endl;
-			m_Packet.m_nSock_ID = m_iConnectSock;
-			m_Packet.m_nCMD ^= m_Packet.m_nCMD;
-			m_Packet.m_nCMD |= CMD_USER_LOGIN_RESULT;
-			send(*_fd,(char*) &m_Packet, sizeof(PACKET), 0);
+			//cout << "< " << m_Packet.m_nSock_ID << " : " << m_Packet.m_szID << " > Login Complete!" << endl;
+			PacketCpy.m_nSock_ID = m_iConnectSock;
+			PacketCpy.m_nCMD ^= PacketCpy.m_nCMD;
+			PacketCpy.m_nCMD |= CMD_USER_LOGIN_RESULT;
+			send(*_fd,(char*) &PacketCpy, sizeof(PACKET), 0);
 			break;
 		case CMD_USER_DATA_REQ:
 
-			cout << "[" << m_Packet.m_szID << "] message : " << m_Packet.m_szData << endl;
-			m_Packet.m_nSock_ID = m_iConnectSock;
-			m_Packet.m_nCMD ^= m_Packet.m_nCMD;
-			m_Packet.m_nCMD |= CMD_USER_DATA_RESULT;
-			send(*_fd,(char*) &m_Packet, sizeof(PACKET), 0);
+			//cout << "[" << m_iConnectSock << "] ID '" << m_Packet.m_szID << "' message : " << m_Packet.m_szData << endl;
+			PacketCpy.m_nSock_ID = m_iConnectSock;
+			PacketCpy.m_nCMD ^= PacketCpy.m_nCMD;
+			PacketCpy.m_nCMD |= CMD_USER_DATA_RESULT;
+			send(*_fd,(char*) &PacketCpy, sizeof(PACKET), 0);
 
 			break;
 		case CMD_USER_SAVE_REQ:
@@ -198,19 +208,20 @@ void CUser::Send(int* _fd, list<PACKET>* _List)
 			}
 			break;
 		}//switch
+
 		m_isRecv = false;
 
-	//}//if
+	}//if
 }
 
 //int CUser::Recv(int* _fd)
 //{
 //	int n, offset = 0;
 //	errno = 0;
-//	memset(&m_Packet.m_szData, 0, sizeof(MAX_PACKET_SIZE));
+//	PACKET RecvPack;
 //
-//	//MSG_DONTWAIT
-//	while(sizeof(PACKET) - offset > 0 && (n = recv(*_fd, (char*)&m_Packet + offset, sizeof(PACKET) - offset, 0)) > 0)
+//	//MSG_PEEK | MSG_DONTWAIT
+//	while(sizeof(PACKET) - offset > 0 && (n = recv(*_fd, (char*)&RecvPack + offset, sizeof(PACKET) - offset,  0)) > 0)
 //	{
 //		offset += n;
 //	}
@@ -222,34 +233,30 @@ void CUser::Send(int* _fd, list<PACKET>* _List)
 //	}
 //	else
 //	{
-////		cout << "============ PACKET INFO ============" << endl;
-////		cout << "head : " << m_Packet.m_szHead << endl;
-////		cout << "tail : " << m_Packet.m_szTail << endl;
-////		cout << "sock ID : " << m_Packet.m_nSock_ID << endl;
-////		cout << "user ID : " << m_Packet.m_szID << endl;
-////		cout << "data : " << m_Packet.m_szData << endl;
-////		cout << "size : " << m_Packet.m_iSize << endl;
-////		cout << "=====================================" << endl;
+////		cout << "Recv Func() working Push Data" << endl;
+////		cout << RecvPack.m_nSock_ID << endl;
+////		cout << RecvPack.m_szID << endl;
+////		cout << RecvPack.m_szData << endl;
+////		cout << RecvPack.m_iSize << endl;
 //
-//		//if(true == PacketCheck(m_Packet))
-//		//{
-//		CirBuf->Push(&m_Packet);
-//		CirBuf->Print();
-//		if (CirBuf->isFull())
-//			CirBuf->Pop();
-//
-//		m_isRecv = true;
-//		//}
+//		CirBuf->Push(&RecvPack);
+////		CirBuf->Print();
+////		if (CirBuf->isFull())
+////			CirBuf->Pop();
 //		return offset;
 //	}
 //}
 
 bool CUser::PacketCheck(PACKET data)
 {
-	if( strcmp( data.m_szHead, "AA11" ) != 0 )
-		return false;
-	if( strcmp( data.m_szTail, "11AA" ) != 0 )
-		return false;
+//	if( strcmp( data.m_szHead, "AA11" ) != 0 )
+//		return false;
+//	if( strcmp( data.m_szTail, "11AA" ) != 0 )
+//		return false;
+	//if( data.m_nSock_ID <= 0)
+	//	return false;
+	//if(data.m_szID == NULL)
+	//	return false;
 	if( data.m_nCMD <= 0 || data.m_nCMD >= 11)
 		return false;
 	if( data.m_iSize <= 0 )
@@ -258,13 +265,22 @@ bool CUser::PacketCheck(PACKET data)
 	return true;
 }
 
+void CUser::ClearBuf()
+{
+	for(int i = 0; i < m_iCirbufSize; ++i)
+	{
+		memset(&CirBuf[i], 0, sizeof(PACKET));
+	}
+}
+
 int CUser::Recv(int* _fd)
 {
 	int iRecvLen = 0;
-	memset(&m_Packet, 0, sizeof(PACKET));
+	//memset(&m_Packet, 0, sizeof(PACKET));
+	PACKET RecvPack;
 	while(1)
 	{
-		iRecvLen = recv( *_fd, (char*)&m_Packet, sizeof(PACKET), 0);
+		iRecvLen = recv( *_fd, (char*)&RecvPack, sizeof(PACKET), 0);
 
 		if(iRecvLen == 0)
 			return -1;
@@ -275,10 +291,9 @@ int CUser::Recv(int* _fd)
 		}
 		else
 		{
-			CirBuf->Push(&m_Packet);
-			CirBuf->Print();
-			if(CirBuf->isFull())
-				CirBuf->Pop();
+			CirBuf->Push(&RecvPack);
+			//if(CirBuf->isFull())
+			//	CirBuf->ChangeFront();
 		}
 	}
 	return 0;

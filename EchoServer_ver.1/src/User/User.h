@@ -46,6 +46,7 @@ public:
 	void Send(int* _fd, list<PACKET>* _List);
 	int Recv(int* _fd);
 	bool PacketCheck(PACKET data);
+	void ClearBuf();
 
 private:
 	int m_iConnectSock = 0;
@@ -58,6 +59,8 @@ private:
 	bool isDelFind = false;
 	bool isSaveFind = false;
 	bool m_isRecv = false;
+	int m_iCirbufSize = 0;
+
 private:
 	CCircularBuffer<PACKET>* CirBuf;
 	list<PACKET>	m_List;
