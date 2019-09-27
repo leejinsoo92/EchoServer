@@ -33,7 +33,8 @@ public:
 
 private:
 	CUserMng* 		m_UserConnMng;
-	CUser*			m_User[USER_NUM];
+	//CUser*			m_User[USER_NUM];
+	CUser			m_User[USER_NUM];
 	//CUser*			m_User;
 	struct sockaddr_in m_Client_Addr;
 
@@ -45,6 +46,7 @@ private:
 
 	int m_iSock_Len = 0;
 	int m_iClient_Sock = 0;
+	int m_iClient_Socks[USER_NUM] = { 0, };
 	socklen_t m_iAddrsize = 0;
 
 	int m_iString_Len = 0;

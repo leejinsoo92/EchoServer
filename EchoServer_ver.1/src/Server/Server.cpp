@@ -24,52 +24,45 @@ pthread_cond_t  thread_cond;//  = PTHREAD_COND_INITIALIZER;
 CServer::CServer() {
 	// TODO Auto-generated constructor stub
 	m_UserConnMng = new CUserMng();
-	for(int i = 0; i < USER_NUM; ++i)
-	{
-		m_User[i] = new CUser();
-	}
+//	for(int i = 0; i < USER_NUM; ++i)
+//	{
+//		m_User[i] = new CUser();
+//	}
+
+//	m_User = new CUser[USER_NUM];
 }
 
 CServer::~CServer() {
 	// TODO Auto-generated destructor stub
-	free(m_UserConnMng);
-	for(int i = 0; i < USER_NUM; ++i)
-	{
-		free(m_User[i]);
-	}
+	delete m_UserConnMng;
+	m_UserConnMng = nullptr;
+
+//	for(int i = 0; i < USER_NUM; ++i)
+//	{
+//		delete m_User[i];
+//		m_User[i] = nullptr;
+//	}
+//	delete[] m_User;
+//	m_User = nullptr;
+
+
+	pthread_mutex_destroy(&mutex_lock);
 }
 
 void* CServer::Thread_Worker(void* arg)
 {
 	while(1)
 	{
-		//int iFd = ((CServer*)arg)->m_iFd;
-		int m_iEvent_Num = ((CServer*)arg)->m_iEvent_Num;
-		int Events_Fd = (((CServer*) arg)->m_UserConnMng)->m_Events[m_iEvent_Num].data.fd;
-
-		//if((((CServer*) arg)->m_UserConnMng)->m_Events[m_iEvent_Num].events & EPOLLIN)
-		//{
-			for(int i = 0; i < USER_NUM; ++i)
+		for(int i = 0; i < USER_NUM; ++i)
+		{
+			//if( ((CServer*) arg)->m_iClient_Sock == (((CServer*) arg)->m_User[i])->Get_ConnectSock() )
+			if( true == (((CServer*) arg)->m_User[i]).Get_Connect() )
 			{
-				if( true == (((CServer*) arg)->m_User[i])->Get_Connect() )
-				{
-					//pthread_mutex_lock(&mutex_lock);
-					(((CServer*) arg)->m_User[i])->Send(&(((CServer*) arg)->m_iClient_Sock), &(((CServer*) arg)->m_PacketList));
-					//pthread_mutex_unlock(&mutex_lock);
-				}
+				//pthread_mutex_lock(&mutex_lock);
+				(((CServer*) arg)->m_User[i]).Send(&(((CServer*) arg)->m_iClient_Sock), &(((CServer*) arg)->m_PacketList));
+				//pthread_mutex_unlock(&mutex_lock);
 			}
-
-		//}
-
-//		for(int i = 0; i < USER_NUM; ++i)
-//		{
-//			if( true == (((CServer*) arg)->m_User[i])->Get_Connect() )
-//			{
-//				(((CServer*) arg)->m_User[i])->Send(&(Events_Fd), &(((CServer*) arg)->m_PacketList));
-//			}
-//		}
-
-
+		}
 	}
 	return NULL;
 }
@@ -80,20 +73,21 @@ void* CServer::Thread_UserCheck(void* arg)
 	while(1)
 	{
 
-		usleep(1000000);
+		usleep(2000000);
 		iUserCnt = 0;
-		int iFd = ((CServer*)arg)->m_iFd;
-		int m_iEvent_Num = ((CServer*)arg)->m_iEvent_Num;
-		int Events_Fd = (((CServer*) arg)->m_UserConnMng)->m_Events[m_iEvent_Num].data.fd;
-
+		//int iFd = ((CServer*)arg)->m_iFd;
+//		int m_iEvent_Num = ((CServer*)arg)->m_iEvent_Num;
+//		int Events_Fd = (((CServer*) arg)->m_UserConnMng)->m_Events[m_iEvent_Num].data.fd;
+//
 //		if (((CServer*)arg)->m_UserConnMng->m_Events[m_iEvent_Num].events & (EPOLLRDHUP | EPOLLHUP))
 //		{
 //			for(int i = 0; i < USER_NUM; ++i)
 //			{
 //				((CServer*)arg)->m_User[i]->Set_Connect(false);
 //				((CServer*)arg)->m_User[i]->Set_ConnectSock(0);
-//				//epoll_ctl(((CServer*)arg)->m_iEpfd, EPOLL_CTL_DEL, Events_Fd, NULL);
-//				((CServer*)arg)->m_UserConnMng->Epoll_Ctl(&(((CServer*)arg)->m_iEpfd), EPOLL_CTL_DEL, &Events_Fd, 0);
+//				//((CServer*)arg)->m_User[i]->ClearBuf();
+//				epoll_ctl(((CServer*)arg)->m_iEpfd, EPOLL_CTL_DEL, Events_Fd, NULL);
+//				//((CServer*)arg)->m_UserConnMng->Epoll_Ctl(&(((CServer*)arg)->m_iEpfd), EPOLL_CTL_DEL, &Events_Fd, 0);
 //				close(Events_Fd);
 //				cout << "[+] Connection Closed < " << ((CServer*)arg)->m_User[i]->Get_Packet().m_szID << " > FD Num ( " << Events_Fd << " )" << endl;
 //			}
@@ -105,10 +99,11 @@ void* CServer::Thread_UserCheck(void* arg)
 
 		for(int i = 0; i < USER_NUM; ++i)
 		{
-			if( true == (((CServer*) arg)->m_User[i])->Get_Connect() )
+			//if(((CServer*) arg)->m_iClient_Sock == (((CServer*) arg)->m_User[i])->Get_ConnectSock())
+			if( true == (((CServer*) arg)->m_User[i]).Get_Connect() )
 			{
 				iUserCnt++;
-				cout << "ID :" << ((CServer*) arg)->m_User[i]->Get_Packet().m_szID << endl;
+				cout << "ID :" << ((CServer*) arg)->m_User[i].Get_Packet().m_szID << endl;
 			}
 		}
 		cout << endl;
@@ -139,7 +134,7 @@ void CServer::Update()
 		exit(1);
 	}
 
-	//pthread_mutex_init(&mutex_lock, NULL);
+	pthread_mutex_init(&mutex_lock, NULL);
 
 
 	m_iThrStatus = pthread_create(&Thread_Work, NULL, Thread_Worker, (void*)this);
@@ -172,46 +167,48 @@ void CServer::Update()
 			m_iClient_Sock = m_UserConnMng->m_Events[i].data.fd;
 			if (m_UserConnMng->m_Events[i].data.fd == m_iListen_Scok)
 			{
-				//m_iClient_Sock = m_UserConnMng->m_Events[i].data.fd;
-				m_iAddrsize = sizeof(&m_Client_Addr);
-				m_iConnect_Sock = accept(m_iListen_Scok, (struct sockaddr*) &m_Client_Addr, (socklen_t*) &m_iAddrsize);
-				m_UserConnMng->Set_NonBlocking(&m_iConnect_Sock);
-				m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_ADD, &m_iConnect_Sock, EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP);
-				cout << "[+] Connect with" << " : " << ntohs(m_Client_Addr.sin_port) << endl;
-				for(int j = 0; j < 100; ++j)
+
+				m_iAddrsize = sizeof(&m_iClient_Sock);
+				m_iClient_Sock = accept(m_iListen_Scok, (struct sockaddr*) &m_iClient_Sock, (socklen_t*) &m_iAddrsize);
+				m_UserConnMng->Set_NonBlocking(&m_iClient_Sock);
+				m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_ADD, &m_iClient_Sock, EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP);
+				cout << "[+] Connect with" << " : " << m_iClient_Sock << endl;
+				for(int j = 0; j < USER_NUM; ++j)
 				{
-					if(m_User[j]->Get_Connect() == false)
+					if(m_iClient_Socks[j] == 0)
 					{
-						m_User[j]->Set_Connect(true);
-						m_User[j]->Set_ConnectSock(m_iConnect_Sock);
+						m_iClient_Socks[j] = m_iClient_Sock;
+						m_User[j].Set_Connect(true);
+						m_User[j].Set_ConnectSock(m_iClient_Sock);
 						break;
 					}
-				}
 
+//					if(m_User[j]->Get_Connect() == false)
+//					{
+//						m_User[j]->Set_Connect(true);
+//						m_User[j]->Set_ConnectSock(m_iConnect_Sock);
+//						break;
+//					}
+				}
 			}
 
 			else if(m_UserConnMng->m_Events[i].events & EPOLLIN)
 			{
-//				cout << "[ Thread Self Check Point ]" << endl;
-//							pthread_t id;
-//							id = pthread_self();
-//							cout <<"Thread Routine : " << id << endl;
-
-
 				for(int j = 0; j < USER_NUM; ++j)
 				{
-					if( m_UserConnMng->m_Events[i].data.fd == m_User[j]->Get_ConnectSock() )
+					//if( m_UserConnMng->m_Events[i].data.fd == m_User[j]->Get_ConnectSock() )
+					if( m_UserConnMng->m_Events[i].data.fd == m_iClient_Socks[j] )
 					{
-						m_iFd = j;
-
-						if( -1  == m_User[j]->Recv(&(m_UserConnMng->m_Events[i].data.fd)) )
+						if( -1  == m_User[j].Recv(&(m_UserConnMng->m_Events[i].data.fd)) )
 						{
 							cout << "Recv Error!!!" << endl;
-							m_User[m_iFd]->Set_Connect(false);
-							m_User[m_iFd]->Set_ConnectSock(0);
+							m_User[j].Set_Connect(false);
+							m_User[j].Set_ConnectSock(0);
+							m_iClient_Socks[j] = 0;
+							//m_User[m_iFd]->ClearBuf();
 							epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
 							close(m_UserConnMng->m_Events[i].data.fd);
-							cout << "[+] Connection Closed < " << m_User[m_iFd]->Get_Packet().m_szID << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
+							cout << "[+] Connection Closed < " << m_User[j].Get_Packet().m_szID << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
 						}
 						break;
 					}
@@ -226,21 +223,24 @@ void CServer::Update()
 			{
 				for(int j = 0; j < USER_NUM; ++j)
 				{
-					if( m_UserConnMng->m_Events[i].data.fd == m_User[j]->Get_ConnectSock() )
+					if( m_UserConnMng->m_Events[i].data.fd == m_User[j].Get_ConnectSock() )
 					{
-						m_User[m_iFd]->Set_Connect(false);
-						m_User[m_iFd]->Set_ConnectSock(0);
+						m_User[j].Set_Connect(false);
+						m_User[j].Set_ConnectSock(0);
+						//m_User[m_iFd]->ClearBuf();
 						epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
 						//m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_DEL, &m_UserConnMng->m_Events[i].data.fd, 0);
 						close(m_UserConnMng->m_Events[i].data.fd);
-						cout << "[+] Connection Closed < " << m_User[m_iFd]->Get_Packet().m_szID << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
+						cout << "[+] Connection Closed < " << m_User[j].Get_Packet().m_szID << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
 						break;
 					}
 				}
 			}
+
 		}
 	}
 
 	//for(int i = 0; i < 4; ++i)
-	//	pthread_join(Thread_Rout, (void**)&m_iThrStat);
+	//pthread_join(Thread_Work, (void**)&m_iThrStat);
+	//pthread_join(Thread_User, (void**)&m_iThrStat);
 }
