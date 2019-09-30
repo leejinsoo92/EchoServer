@@ -8,8 +8,8 @@
 #ifndef MNG_USERMNG_USER_USER_H_
 #define MNG_USERMNG_USER_USER_H_
 
-#include "../CircularBuffer/CircularBuffer.h"
-#include "../Defines/Packet_Define.h"
+#include "../CircularBuffer/CircularBuf.h"
+//#include "../Defines/Packet_Define.h"
 #include <list>
 
 class CUser {
@@ -42,10 +42,9 @@ public:
 	}
 
 public:
-	void Send(int* _fd);
 	void Send(int* _fd, list<PACKET>* _List);
 	int Recv(int* _fd);
-	bool PacketCheck(PACKET data);
+	bool PacketCheck(PACKET_HEAD head, PACKET_TAIL tail);
 	void ClearBuf();
 
 private:
@@ -61,8 +60,11 @@ private:
 	bool m_isRecv = false;
 	int m_iCirbufSize = 0;
 
+	char m_iPackTemp[10000];
+
 private:
-	CCircularBuffer<PACKET>* CirBuf;
+	//CCircularBuffer<PACKET>* CirBuf;
+	//CCircularBuf* CirBuf;
 	list<PACKET>	m_List;
 };
 
