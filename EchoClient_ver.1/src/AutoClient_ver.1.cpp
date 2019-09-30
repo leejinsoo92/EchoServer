@@ -39,7 +39,7 @@ void client_run();
 bool PacketCheck(PACKET data);
 static void set_sockaddr(struct sockaddr_in *addr);
 int RecvFromServer(int sockfd, char* buf, int buf_size);
-bool PacketCheck(PACKET data);
+bool PacketCheck(PACKET_HEAD head, PACKET_TAIL tail);
 
 int main()
 {
@@ -54,17 +54,23 @@ void client_run()
 	int iData_Len = 0;
 	struct sockaddr_in srv_addr;
 	int numbytes = 0;
+
+	char szBuf[MAX_PACKET_SIZE] = { };
+
 	string loginTemp = "login request";
 	string printTemp = "print request";
+	string sID;
 	unsigned short nMemoCmd = 0;
 
 	int randSize = 0;
 
-	PACKET Packet;
+	PACKET Login_Packet;
+	PACKET_HEAD Login_Pack_Head;
+	PACKET_TAIL Login_Pack_Tail;
 
 	srand(time(NULL));
 
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	sockfd = socket(PF_INET, SOCK_STREAM, 0);
 
 	set_sockaddr(&srv_addr);
 
@@ -75,20 +81,47 @@ void client_run()
 	}
 
 	cout << "ID : ";
-	fgets(Packet.m_szID, sizeof(Packet.m_szID), stdin);
+	fgets(Login_Packet.m_szID, sizeof(Login_Packet.m_szID), stdin);
+	iData_Len = strlen(Login_Packet.m_szID) - 1;
 
-	iData_Len = strlen(Packet.m_szID) - 1;
-	Packet.m_szID[iData_Len] = '\0';
+//	sID = "TEST";
+//	strcpy(Login_Packet.m_szID, sID.c_str());
+	Login_Packet.m_szID[iData_Len] = '\0';
 
-	//Packet.m_nCMD ^= Packet.m_nCMD;
-	Packet.m_nCMD |= CMD_USER_LOGIN_REQ;
-	strcpy(Packet.m_szData, loginTemp.c_str());
+	Login_Packet.m_nCMD = 0;
+	Login_Packet.m_nCMD |= CMD_USER_LOGIN_REQ;
+	strcpy(Login_Packet.m_szData, loginTemp.c_str());
 
-	Packet.m_iSize = loginTemp.length();
-	//cout << "data size : " << Packet.m_iSize << endl;
+	Login_Packet.m_iSize = loginTemp.length();
+	Login_Packet.m_szData[Login_Packet.m_iSize] = '\0';
 
-	send(sockfd, (char*)&Packet, sizeof(Packet), 0);
-	cout << "success send about login data!" << endl;
+	Login_Pack_Head.m_iPacketSize = sizeof(Login_Packet);
+
+	AssemblePacket(szBuf, Login_Pack_Head, Login_Packet, Login_Pack_Tail);
+
+	cout << sizeof(szBuf) << endl;
+//	PACKET Test_Packet;
+//	PACKET_HEAD Test_Pack_Head;
+//	PACKET_TAIL Test_Pack_Tail;
+//	DisAssemblePacket(szBuf, Test_Pack_Head, Test_Packet, Test_Pack_Tail);
+//
+//	cout << "head : " << Test_Pack_Head.m_szHead << endl;
+//	cout << "packet size : " << Test_Pack_Head.m_iPacketSize << endl << endl;
+//	cout << "ID : " << Test_Packet.m_szID << endl;
+//	cout << "CMD : " << Test_Packet.m_nCMD << endl;
+//	cout << "DATA : " << Test_Packet.m_szData << endl << endl;
+//	cout << "tail : " << Test_Pack_Tail.m_szTail << endl;
+
+	send(sockfd, (char*)&szBuf, sizeof(szBuf), 0);
+
+	//send(sockfd, (char*)&Packet, sizeof(PACKET), MSG_DONTWAIT);
+
+//	cout << Packet.m_szID << endl;
+//	cout << Packet.m_nCMD << endl;
+//	cout << Packet.m_iSize << endl;
+//	cout << Packet.m_szData << endl;
+
+	//cout << "success send about login data!" << endl;
 	//memset(&Packet.m_szData, 0, sizeof(MAX_PACKET_SIZE));
 
 //	if((numbytes = RecvFromServer(sockfd, (char*)&Packet, sizeof(PACKET))) == 0)
@@ -97,6 +130,7 @@ void client_run()
 //		return;
 //	}
 
+	usleep(600000);
 	bool isSend = false;
 
 	while(1)
@@ -104,26 +138,38 @@ void client_run()
 		int iMenu = 0;
 		string sInput;
 
-		//usleep(1000000);
-		memset(&Packet.m_szData, 0, sizeof(MAX_PACKET_SIZE));
-		//RecvFromServer(sockfd, (char*) &Packet, sizeof(PACKET));
-//		if ((numbytes = RecvFromServer(sockfd, (char*) &Packet, sizeof(PACKET)))
+		//PACKET RecvPack;
+//		//RecvFromServer(sockfd, (char*) &Packet, sizeof(PACKET));
+//		if ((numbytes = RecvFromServer(sockfd, (char*) &szBuf, sizeof(PACKET)))
 //				== 0) {
 //			cout << "[Client] Server Terminated." << endl;
 //			return;
 //		}
-		recv(sockfd, (char*)&Packet, sizeof(PACKET), 0);
 
-		//if( true == PacketCheck(Packet))
-		//{
+//		if ( recv(sockfd, (char*)&szBuf, sizeof(PACKET), 0) == -1 )
+//		{
+//			puts("recv error");
+//			//exit(1);
+//		}
+
+		recv(sockfd, (char*)&szBuf, sizeof(szBuf), 0);
+
+		PACKET Packet;
+		PACKET_HEAD Pack_Head;
+		PACKET_TAIL Pack_Tail;
+
+		DisAssemblePacket(szBuf, Pack_Head, Packet, Pack_Tail);
+
+		if( true == PacketCheck(Pack_Head, Pack_Tail))
+		{
 			if ((Packet.m_nCMD == CMD_USER_LOGIN_RESULT)) {
-				cout << "Login Complete!" << endl;
+				cout << "Login Complete!" << endl << endl;
 			}
 			else if ((Packet.m_nCMD == CMD_USER_DATA_RESULT)) {
-				cout << "[" << Packet.m_nSock_ID << "]" << "echo  : " << Packet.m_szData << endl;
+				cout << "[" << Packet.m_nSock_ID << "]" << "echo  : " << Packet.m_szData << endl<< endl;
 			}
 			else if ((Packet.m_nCMD == CMD_USER_SAVE_RESULT)) {
-				cout << "Save Compelete" << endl;
+				cout << "Save Compelete" << endl ;
 				//isSend = false;
 			}
 			else if ((Packet.m_nCMD == CMD_USER_DELETE_RESULT)) {
@@ -155,39 +201,40 @@ void client_run()
 				//isSend = false;
 			}
 			//isSend = false;
-		//}
+		}
 
 
-		usleep(1000000);
+		usleep(600000);
 
+		//system("clear");
 		//if(isSend == false )
 		//{
-			memset(&Packet.m_szData, 0, sizeof(MAX_PACKET_SIZE));
+			//memset(&Packet.m_szData, 0, sizeof(MAX_PACKET_SIZE));
 			randSize = rand() % 5 + 3;
-			RETURN:
+//			RETURN:
+//
+//			cout << "--------------" << endl;
+//			cout << "     Menu     " << endl;
+//			cout << "1. Echo Data  " << endl;
+//			cout << "2. Save Data  " << endl;
+//			cout << "3. Delete Data" << endl;
+//			cout << "4. Print      " << endl;
+//			cout << "5. Quit       " << endl;
+//			cout << "--------------" << endl;
+//			cout << "select : ";
+//
+//			iMenu = 1;//rand() % 4 + 1;
+//			cout << iMenu << endl;
+//
+//			if( iMenu > 5 || iMenu < 1)
+//			{
+//				cin.clear();
+//				cin.ignore(256,'\n');
+//				cout << "Please Enter Again!!" << endl;
+//				goto RETURN;
+//			}
 
-			cout << "--------------" << endl;
-			cout << "     Menu     " << endl;
-			cout << "1. Echo Data  " << endl;
-			cout << "2. Save Data  " << endl;
-			cout << "3. Delete Data" << endl;
-			cout << "4. Print      " << endl;
-			cout << "5. Quit       " << endl;
-			cout << "--------------" << endl;
-			cout << "select : ";
-
-			iMenu = 1;//rand() % 4 + 1;
-			cout << iMenu << endl;
-
-			if( iMenu > 5 || iMenu < 1)
-			{
-				cin.clear();
-				cin.ignore(256,'\n');
-				cout << "Please Enter Again!!" << endl;
-				goto RETURN;
-			}
-
-			switch(iMenu)
+			switch(1)
 			{
 			case 1:
 				cout << "Echo input : ";
@@ -206,7 +253,11 @@ void client_run()
 				Packet.m_iSize = sInput.length();
 				Packet.m_szData[Packet.m_iSize] = '\0';
 
-				send(sockfd, (char*) &Packet, sizeof(PACKET), 0);
+				Pack_Head.m_iPacketSize = sizeof(Packet);
+
+				AssemblePacket(szBuf, Pack_Head, Packet, Pack_Tail);
+
+				send(sockfd, (char*) &szBuf, sizeof(szBuf), 0);
 
 				break;
 			case 2:
@@ -286,7 +337,7 @@ static void set_sockaddr(struct sockaddr_in *addr)
 //	int n, offset = 0;
 //	errno = 0;
 //
-//	//MSG_DONTWAIT
+//	//MSG_PEEK | MSG_DONTWAIT
 //	while(buf_size - offset > 0 && (n = recv(sockfd, buf + offset , buf_size - offset, 0)) > 0)
 //	{
 //		offset += n;
@@ -302,31 +353,29 @@ static void set_sockaddr(struct sockaddr_in *addr)
 //		return offset;
 //}
 
-//int RecvFromServer(int sockfd, char* buf, int buf_size)
-//{
-//	int iRecvLen = 0;
-//	while (1) {
-//		iRecvLen = recv(sockfd, buf, buf_size, 0);
-//
-//		if (iRecvLen == 0)
-//			return -1;
-//		else if (iRecvLen < 0) {
-//			if ( errno == EAGAIN)
-//				break;
-//		}
-//	}
-//	return 0;
-//}
-
-bool PacketCheck(PACKET data)
+int RecvFromServer(int sockfd, char* buf, int buf_size)
 {
-	if( strcmp( data.m_szHead, "AA11" ) != 0 )
+	int iRecvLen = 0;
+	while (1) {
+		iRecvLen = recv(sockfd, buf, buf_size, 0);
+
+		if (iRecvLen == 0)
+			return -1;
+		else if (iRecvLen < 0) {
+			if ( errno == EAGAIN)
+				break;
+		}
+	}
+	return 0;
+}
+
+bool PacketCheck(PACKET_HEAD head, PACKET_TAIL tail)
+{
+	if( strcmp( head.m_szHead, "AA11" ) != 0 )
 		return false;
-	if( strcmp( data.m_szTail, "11AA" ) != 0 )
+	if( head.m_iPacketSize <= 0 )
 		return false;
-	if( data.m_nCMD <= 0 || data.m_nCMD >= 11)
-		return false;
-	if( data.m_iSize <= 0 )
+	if( strcmp( tail.m_szTail, "11AA" ) != 0 )
 		return false;
 
 	return true;
