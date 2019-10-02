@@ -20,7 +20,8 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <string.h>
-#include "Packet_Define.h"
+#include "CircularBuf.h"
+//#include "Packet_Define.h"
 
 #include <iostream>
 using namespace std;
@@ -74,8 +75,11 @@ void client_run()
 
 	int randSize = 0;
 
-	char szRecvBuf[MAX_PACKET_SIZE] = { } ;
+	//CCircularBuf* m_pCirBuf = nullptr;
+	//m_pCirBuf = new CCircularBuf();
+
 	CIR_BUF pCirBuf;
+	char szRecvBuf[MAX_PACKET_SIZE] = { } ;
 
 	srand(time(NULL));
 
@@ -110,7 +114,8 @@ void client_run()
 	{
 		int iMenu = 0;
 		string sInput;
-
+		int iDataSize;
+		PACKET_HEAD *head;
 		if(isSend == true)
 		{
 			int iRecvLen = 0;
@@ -123,23 +128,24 @@ void client_run()
 					if ( errno == EAGAIN)
 						break;
 				} else {
-					if (pCirBuf.iRear + iRecvLen > pCirBuf.iMaxSize)
-						pCirBuf.iRear = 0;
 
-					memcpy(&pCirBuf.szTempBuf[pCirBuf.iRear], szRecvBuf,
-							iRecvLen);
-					pCirBuf.iRear += iRecvLen;
+					if( pCirBuf.iMaxSize < pCirBuf.iRear + iRecvLen )
+					{
+						int iDivide = pCirBuf.iMaxSize - pCirBuf.iRear;
+						memcpy(&pCirBuf.szTempBuf[pCirBuf.iRear], szRecvBuf, iDivide);
+
+						pCirBuf.iRear = iRecvLen - iDivide;
+						memcpy(pCirBuf.szTempBuf, szRecvBuf + iDivide, pCirBuf.iRear);
+					}
+					else
+					{
+						memcpy(&pCirBuf.szTempBuf[pCirBuf.iRear], szRecvBuf, iRecvLen);
+						pCirBuf.iRear += iRecvLen;
+					}
 				}
 			}
 
-		/*if ((numbytes = RecvFromServer(sockfd, (char*)&szRecvBuf, sizeof(szRecvBuf), &pCirBuf)) == 0)
-		{
-			cout << "[Client] Server Terminated." << endl;
-			return;
-		}*/
-
-
-		PACKET_HEAD* head = (PACKET_HEAD*)(&pCirBuf.szTempBuf[pCirBuf.iFront]);
+		head = (PACKET_HEAD*)(&pCirBuf.szTempBuf[pCirBuf.iFront]);
 		PACKET_TAIL* tail = (PACKET_TAIL*)(head + head->m_iPacketSize - sizeof(PACKET_TAIL));
 		//PACKET* packet = (PACKET*)(head);
 
@@ -205,12 +211,15 @@ void client_run()
 		break;
 		}
 
-		if(pCirBuf.iFront + head->m_iPacketSize > pCirBuf.iMaxSize)
-			pCirBuf.iFront = 0;
-		else
-			pCirBuf.iFront += head->m_iPacketSize;
+
+//
+//
+
+
+
 		}
-		usleep(100000);
+
+		usleep(10000);
 
 		//system("clear");
 		if(isSend == false )
@@ -319,6 +328,12 @@ void client_run()
 //				exit(1);
 //				break;
 			}
+
+
+			if( pCirBuf.iMaxSize < pCirBuf.iFront + head->m_iPacketSize )
+				pCirBuf.iFront = head->m_iPacketSize - ( pCirBuf.iMaxSize - pCirBuf.iFront );
+			else
+				pCirBuf.iFront += head->m_iPacketSize;
 
 		}
 
