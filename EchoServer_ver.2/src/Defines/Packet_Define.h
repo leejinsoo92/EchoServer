@@ -91,6 +91,97 @@ struct PACKET_SC_ECHO
 	}
 };
 
+struct PACKET_CS_SAVE
+{
+	PACKET_HEAD		m_Head;
+
+	char				m_szData[MAX_PACKET_SIZE];
+	int 				m_iSize = 0;
+
+	PACKET_TAIL		m_Tail;
+
+	PACKET_CS_SAVE()
+	{
+		m_Head.m_iPacketSize = sizeof(PACKET_CS_SAVE);
+		m_Head.m_nCMD = CMD_USER_SAVE_REQ;
+	}
+};
+
+struct PACKET_SC_SAVE
+{
+	PACKET_HEAD		m_Head;
+
+	bool				m_isComplete = false;
+
+	PACKET_TAIL		m_Tail;
+
+	PACKET_SC_SAVE()
+	{
+		m_Head.m_iPacketSize = sizeof(PACKET_SC_SAVE);
+		m_Head.m_nCMD = CMD_USER_SAVE_RESULT;
+	}
+};
+
+struct PACKET_CS_DEL
+{
+	PACKET_HEAD		m_Head;
+
+	char				m_szData[MAX_PACKET_SIZE];
+	int 				m_iSize = 0;
+
+	PACKET_TAIL		m_Tail;
+
+	PACKET_CS_DEL()
+	{
+		m_Head.m_iPacketSize = sizeof(PACKET_CS_DEL);
+		m_Head.m_nCMD = CMD_USER_DELETE_REQ;
+	}
+};
+
+struct PACKET_SC_DEL
+{
+	PACKET_HEAD		m_Head;
+
+	bool				m_isComplete = false;
+
+	PACKET_TAIL		m_Tail;
+
+	PACKET_SC_DEL()
+	{
+		m_Head.m_iPacketSize = sizeof(PACKET_SC_DEL);
+		m_Head.m_nCMD = CMD_USER_DELETE_RESULT;
+	}
+};
+
+struct PACKET_CS_PRINT
+{
+	PACKET_HEAD		m_Head;
+
+	PACKET_TAIL		m_Tail;
+
+	PACKET_CS_PRINT()
+	{
+		m_Head.m_iPacketSize = sizeof(PACKET_CS_PRINT);
+		m_Head.m_nCMD = CMD_USER_PRINT_REQ;
+	}
+};
+
+struct PACKET_SC_PRINT
+{
+	PACKET_HEAD		m_Head;
+
+	char				m_szData[MAX_PACKET_SIZE];
+	bool				m_isComplete = false;
+
+	PACKET_TAIL		m_Tail;
+
+	PACKET_SC_PRINT()
+	{
+		m_Head.m_iPacketSize = sizeof(PACKET_SC_PRINT);
+		m_Head.m_nCMD = CMD_USER_PRINT_RESULT;
+	}
+};
+
 //struct PACKET
 //{
 //	PACKET_HEAD		m_Head;

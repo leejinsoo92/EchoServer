@@ -6,6 +6,7 @@
  */
 
 #include "Server.h"
+#include "../DataReposit/DataReposit.h"
 #include <mutex>
 pthread_mutex_t mutex_lock;
 //use to create thread
@@ -24,7 +25,7 @@ CServer::CServer() {
 	m_UserConnMng = new CUserMng();
 //	for(int i = 0; i < USER_NUM; ++i)
 //	{
-//		m_User[i] = new CUser();
+//		m_User[i] = CUser();
 //	}
 
 //	m_User = new CUser[USER_NUM];
@@ -51,7 +52,20 @@ void* CServer::Thread_Worker(void* arg)
 {
 	while(1)
 	{
-		int m_iEvent_Num = ((CServer*)arg)->m_iEvent_Num;
+
+//		auto User = ((CServer*) arg)->m_UserHash.find(((CServer*) arg)->m_iClient_Fd);
+//
+//		if(((CServer*) arg)->m_UserHash.end() != User)
+//		{
+//			if( ((CServer*) arg)->m_iClient_Fd == User->first )
+//			{
+//				if( true == User->second->Get_isRecv())
+//				{
+//					User->second->ProcMsg(User->first);
+//				}
+//			}
+//		}
+//		usleep(10000);
 
 		for(int i = 0; i < USER_NUM; ++i)
 		{
@@ -70,12 +84,11 @@ void* CServer::Thread_Worker(void* arg)
 
 void* CServer::Thread_UserCheck(void* arg)
 {
-	int iUserCnt = 0;
+
 	while(1)
 	{
-
+		int iUserCnt = 0;
 		usleep(2000000);
-		iUserCnt = 0;
 		//int iFd = ((CServer*)arg)->m_iFd;
 //		int m_iEvent_Num = ((CServer*)arg)->m_iEvent_Num;
 //		int Events_Fd = (((CServer*) arg)->m_UserConnMng)->m_Events[m_iEvent_Num].data.fd;
@@ -98,6 +111,24 @@ void* CServer::Thread_UserCheck(void* arg)
 		cout << "                User Check" << endl;
 		cout << "-------------------------------------------" << endl;
 
+//		int iUserCnt = ((CServer*) arg)->m_UserHash.size();
+//		auto User = ((CServer*) arg)->m_UserHash.find(((CServer*) arg)->m_iClient_Fd);
+//
+//
+//		if(((CServer*) arg)->m_UserHash.end() == User)
+//		{
+//			cout << "접속한 유저가 없습니다." << endl;
+//		}
+//
+//		else
+//		{
+//		if( true == User->second->Get_Connect() )
+//		{
+//
+//			cout << "ID :" << User->second->Get_ID() << endl;
+//		}
+
+
 		for(int i = 0; i < USER_NUM; ++i)
 		{
 			//if(((CServer*) arg)->m_iClient_Sock == (((CServer*) arg)->m_User[i])->Get_ConnectSock())
@@ -109,6 +140,7 @@ void* CServer::Thread_UserCheck(void* arg)
 		}
 		cout << endl;
 		cout << " 현재 접속해 있는 유저 수 : " << iUserCnt << " 명" << endl;
+		//}
 		cout << endl;
 		cout << "===========================================" << endl;
 	}
@@ -147,39 +179,61 @@ void CServer::Run()
 
 		for (int i = 0; i < m_iEvent_Cnt; ++i)
 		{
-			m_iEvent_Num = i;
-			m_iClient_Sock = m_UserConnMng->m_Events[i].data.fd;
-			if (m_UserConnMng->m_Events[i].data.fd == m_iListen_Scok)
+			m_iClient_Fd = m_UserConnMng->m_Events[i].data.fd;
+			if (m_iClient_Fd == m_iListen_Scok)
 			{
-				pthread_mutex_lock(&sync_mutex);
-				m_iAddrsize = sizeof(&m_iClient_Sock);
-				m_iClient_Sock = accept(m_iListen_Scok, (struct sockaddr*) &m_iClient_Sock, (socklen_t*) &m_iAddrsize);
-				m_UserConnMng->Set_NonBlocking(&m_iClient_Sock);
-				m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_ADD, &m_iClient_Sock, EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP);
-				cout << "[+] Connect with" << " : " << m_iClient_Sock << endl;
+				//pthread_mutex_lock(&sync_mutex);
+				m_iAddrsize = sizeof(&clientaddr);
+				m_iClient_Fd = accept(m_iListen_Scok, (struct sockaddr*) &clientaddr, (socklen_t*) &m_iAddrsize);
+				m_UserConnMng->Set_NonBlocking(&m_iClient_Fd);
+				m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_ADD, &m_iClient_Fd, EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP);
+				cout << "[+] Connect with" << " : " << inet_ntoa(clientaddr.sin_addr) << endl;
+
+//				CUser* User = new CUser();
+//				User->Set_Connect(true);
+//				User->Set_ConnectSock(m_iClient_Fd);
+//				m_UserHash.insert(make_pair(m_iClient_Fd, User));
 
 				for(int j = 0; j < USER_NUM; ++j)
 				{
 					if(m_iClient_Socks[j] == 0)
 					{
-						m_iClient_Socks[j] = m_iClient_Sock;
+						m_iClient_Socks[j] = m_iClient_Fd;
 						m_User[j].Set_Connect(true);
-						m_User[j].Set_ConnectSock(m_iClient_Sock);
+						m_User[j].Set_ConnectSock(m_iClient_Fd);
 						break;
 					}
 				}
-				pthread_mutex_unlock(&sync_mutex);
+				//pthread_mutex_unlock(&sync_mutex);
 			}
 
 			else
 			{
-				//pthread_mutex_lock(&sync_mutex);
+//				auto User = m_UserHash.find(m_iClient_Fd);
+//
+//				if(m_UserHash.end() != User)
+//				{
+//				if( m_iClient_Fd == User->first)
+//				{
+//					if (-1 == User->second->Recv(m_iClient_Fd)) {
+//						cout << "Recv Error!!!" << endl;
+//						User->second->Set_Connect(false);
+//						User->second->Set_ConnectSock(0);
+//
+//						epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
+//						close(m_UserConnMng->m_Events[i].data.fd);
+//						cout << "[+] Connection Closed < " << User->second->Get_ID() << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
+//					}
+//					break;
+//				}
+//				}
+
 				for(int j = 0; j < USER_NUM; ++j)
 				{
 					//if( m_UserConnMng->m_Events[i].data.fd == m_User[j]->Get_ConnectSock() )
-					if( m_iClient_Sock == m_iClient_Socks[j] )
+					if( m_iClient_Fd == m_iClient_Socks[j] )
 					{
-						if( -1  == m_User[j].Recv(m_iClient_Sock) )
+						if( -1  == m_User[j].Recv(m_iClient_Fd) )
 						{
 							cout << "Recv Error!!!" << endl;
 							m_User[j].Set_Connect(false);
@@ -193,11 +247,24 @@ void CServer::Run()
 						break;
 					}
 				}
-				//pthread_mutex_unlock(&sync_mutex);
+
 			}
 
 			if (m_UserConnMng->m_Events[i].events & (EPOLLRDHUP | EPOLLHUP))
 			{
+
+//				auto User = m_UserHash.find(m_iClient_Fd);
+//
+//				if (m_iClient_Fd== User->first)
+//				{
+//					User->second->Set_Connect(false);
+//					User->second->Set_ConnectSock(0);
+//					epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
+//					close(m_UserConnMng->m_Events[i].data.fd);
+//					cout << "[+] Connection Closed < " << User->second->Get_ID() << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
+//					break;
+//				}
+
 				for(int j = 0; j < USER_NUM; ++j)
 				{
 					if( m_UserConnMng->m_Events[i].data.fd == m_User[j].Get_ConnectSock() )

@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include "Server/Server.h"
+#include "DataReposit/DataReposit.h"
 
 using namespace std;
 
@@ -17,5 +18,8 @@ int main() {
 	CServer EchoServer = CServer();
 
 	EchoServer.Run();
+
+	CDataReposit *DataList = CDataReposit::getInstance();
+	DataList->DeleteInstance();
 	return 0;
 }

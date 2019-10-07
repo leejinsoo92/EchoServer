@@ -9,8 +9,8 @@
 #define CIRCULARBUFFER_CIRCULARBUF_H_
 
 #include "../Defines/Packet_Define.h"
-#include <iostream>
-using namespace std;
+//#include <iostream>
+//using namespace std;
 
 class CCircularBuf {
 public:

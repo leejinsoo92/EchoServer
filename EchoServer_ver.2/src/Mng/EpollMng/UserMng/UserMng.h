@@ -9,10 +9,10 @@
 #define USERMNG_USERMNG_H_
 
 #include "../../EpollMng/EpollManager.h"
-#include <iostream>
-#include <list>
+//#include <iostream>
+//#include <list>
 
-using namespace std;
+//using namespace std;
 
 class CUserMng : public CEpoll_Manager{
 public:
@@ -22,7 +22,7 @@ public:
 public:
 	bool Client_Connect(int* _iEpfd, int* _iListen_Scok);
 
-private:
+public:
 	struct sockaddr_in m_Server_Addr;
 
 public:

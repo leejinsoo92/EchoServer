@@ -12,6 +12,7 @@ RM := rm -rf
 -include src/Server/subdir.mk
 -include src/Mng/EpollMng/UserMng/subdir.mk
 -include src/Mng/EpollMng/subdir.mk
+-include src/DataReposit/subdir.mk
 -include src/CircularBuffer/subdir.mk
 -include src/subdir.mk
 -include subdir.mk

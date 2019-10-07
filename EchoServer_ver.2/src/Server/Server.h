@@ -14,7 +14,7 @@
 #include <unordered_map>
 #include <pthread.h>
 
-#define USER_NUM 100
+#define USER_NUM 1000
 
 using namespace std;
 
@@ -36,7 +36,7 @@ private:
 	CUserMng* 		m_UserConnMng;
 	CUser			m_User[USER_NUM];
 
-	unordered_map<int, CUser*> m_UserHash;
+	//unordered_map<int, CUser*> m_UserHash;
 
 	struct sockaddr_in m_Client_Addr;
 
@@ -47,9 +47,10 @@ private:
 	int m_iConnect_Sock = 0;
 
 	int m_iSock_Len = 0;
-	int m_iClient_Sock = 0;
+	int m_iClient_Fd = 0;
 	int m_iClient_Socks[USER_NUM] = { 0, };
 	socklen_t m_iAddrsize = 0;
+	struct sockaddr_in clientaddr;
 
 	int m_iString_Len = 0;
 	int m_iData_Len = 0;

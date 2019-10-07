@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <list>
+#include <vector>
 
 using namespace std;
 
@@ -27,12 +28,13 @@ public:
 public:
 	bool isEmpty();
 	void SaveData(char* _data);
-	void DeleteData(char* _data);
+	bool DeleteData(char* _data);
+	char* PrintSendData(int num);
 	void PrintData();
 
 private:
 	int test = 0;
-	list<string> m_listData;
+	vector<string> m_listData;
 
 };
 
