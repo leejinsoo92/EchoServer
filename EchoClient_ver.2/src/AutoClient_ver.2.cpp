@@ -66,9 +66,7 @@ void client_run()
 	int sockfd = 0;
 	int iData_Len = 0;
 	struct sockaddr_in srv_addr;
-	int iOpenMenu = 0;
-	bool isAuto = true;
-	bool isPrintFinish = false;
+	bool isAuto = false;
 
 	string loginTemp = "login request";
 	string printTemp = "print request";
@@ -95,24 +93,8 @@ void client_run()
 	}
 
 	if(fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFD, 0) | O_NONBLOCK) == -1)
-		cout << "error" << endl;
+			cout << "error" << endl;
 
-
-	cout << "===========================" << endl;
-	cout << "	Echo Program" << endl;
-	cout << endl;
-	cout << "	1. 직접 입력" << endl;
-	cout << "	2. 자동 입력" << endl;
-	cout << "===========================" << endl;
-	cout << "select : ";
-	cin >> iOpenMenu;
-
-	if(iOpenMenu == 1)
-		isAuto = false;
-	else if(iOpenMenu == 2)
-		isAuto = true;
-
-	cin.ignore();
 
 	PACKET_CS_LOGIN Login_Packet;
 	cout << "ID : ";
@@ -135,8 +117,8 @@ void client_run()
 		PACKET_HEAD *head;
 		if(isSend == true)
 		{
-			usleep(100000);
 			RECV_BACK:
+			usleep(100000);
 			int iRecvLen = 0;
 			while (1) {
 				iRecvLen = recv(sockfd, szRecvBuf, sizeof(szRecvBuf), 0);
@@ -209,7 +191,6 @@ void client_run()
 				PACKET_SC_LOGIN* packet = (PACKET_SC_LOGIN*)(head);
 				cout << "Login Complete!" << endl << endl;
 				isSend = false;
-
 			}
 			break;
 			case CMD_USER_DATA_RESULT:
@@ -217,7 +198,6 @@ void client_run()
 				PACKET_SC_ECHO* packet = (PACKET_SC_ECHO*)(head);
 				cout << "echo  : " << packet->m_szData << endl<< endl;
 				isSend = false;
-
 			}
 			break;
 			case CMD_USER_SAVE_RESULT:
@@ -256,19 +236,19 @@ void client_run()
 					cout << "<< Print Finish! >>" << endl;
 					cout << endl;
 					isSend = false;
-					isPrintFinish = true;
 				}
 				else
 				{
 					cout << "Reposit  : " << packet->m_szData << endl;
-					isPrintFinish = false;
-					//usleep(100000);
 				}
 
 			}
 			break;
 			}
+
+
 			m_pCirBuf->Pop( head->m_iPacketSize );
+
 //			if( pCirBuf.iMaxSize < pCirBuf.iFront + head->m_iPacketSize )
 //				pCirBuf.iFront = head->m_iPacketSize - ( pCirBuf.iMaxSize - pCirBuf.iFront );
 //			else
@@ -281,8 +261,7 @@ void client_run()
 		//system("clear");
 		if(isSend == false )
 		{
-			if(isAuto == true)
-				usleep(100000);
+			usleep(100000);
 			//memset(&Packet.m_szData, 0, sizeof(MAX_PACKET_SIZE));
 			randSize = 1;//rand() % 5 + 3;
 			RETURN:
@@ -297,10 +276,8 @@ void client_run()
 			cout << "--------------" << endl;
 			cout << "select : ";
 
-			if(true == isAuto)
-				iMenu = rand() % 4 + 1;
-			else
-				cin >> iMenu;
+			iMenu = rand() % 4 + 1;
+			cout << iMenu << endl;
 
 			if( iMenu > 5 || iMenu < 1)
 			{
@@ -315,20 +292,13 @@ void client_run()
 			case 1:
 			{
 				cout << "Echo input : ";
+				for(int i = 0; i < randSize; ++i)
+				{
+					sInput += rand() % 25 + 65;
+				}
+				//sInput = rand() % 25 + 65;
+				cout << sInput << endl;
 
-				if(true == isAuto)
-				{
-					for(int i = 0; i < randSize; ++i)
-					{
-						sInput += rand() % 25 + 65;
-					}
-				}
-				else
-				{
-					cin.ignore(256, '\n');
-					getline(cin, sInput);
-				}
-				cout << endl;
 				PACKET_CS_ECHO packet;
 
 				strncpy(packet.m_szData, sInput.c_str(), sizeof(packet.m_szData));
@@ -343,15 +313,13 @@ void client_run()
 			case 2:
 			{
 				cout << "Save input : ";
-				if (true == isAuto) {
-					for (int i = 0; i < randSize; ++i) {
-						sInput += rand() % 25 + 65;
-					}
-				} else {
-					cin.ignore(256, '\n');
-					getline(cin, sInput);
+				for(int i = 0; i < randSize; ++i)
+				{
+					sInput += rand() % 25 + 65;
 				}
-				cout << endl;
+				//sInput = rand() % 25 + 65;
+				cout << sInput << endl;
+
 				PACKET_CS_SAVE packet;
 
 				strncpy(packet.m_szData, sInput.c_str(), sizeof(packet.m_szData));
@@ -365,15 +333,12 @@ void client_run()
 			case 3:
 			{
 				cout << "Delete input : ";
-				if (true == isAuto) {
-					for (int i = 0; i < randSize; ++i) {
-						sInput += rand() % 25 + 65;
-					}
-				} else {
-					cin.ignore(256, '\n');
-					getline(cin, sInput);
+				for (int i = 0; i < randSize; ++i) {
+					sInput += rand() % 25 + 65;
 				}
-				cout << endl;
+				//sInput = rand() % 25 + 65;
+				cout << sInput << endl;
+
 				PACKET_CS_DEL packet;
 
 				strncpy(packet.m_szData, sInput.c_str(), sizeof(packet.m_szData));

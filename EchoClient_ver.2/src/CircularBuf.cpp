@@ -9,25 +9,20 @@
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
-#include <pthread.h>
 
 using namespace std;
 
-
-pthread_mutex_t cir_sync;
 
 CCircularBuf::CCircularBuf() {
 	// TODO Auto-generated constructor stub
 	m_iBufSize = 1024 * 32; // 32kbytes
 	m_CirQueue = new char[m_iBufSize];
-	pthread_mutex_init(&cir_sync, NULL);
 }
 CCircularBuf::CCircularBuf(int _iBufSize)
 	: m_iBufSize(_iBufSize)
 {
 	// TODO Auto-generated constructor stub
 	m_CirQueue = new char[m_iBufSize];
-	pthread_mutex_init(&cir_sync, NULL);
 }
 
 CCircularBuf::~CCircularBuf() {
@@ -76,16 +71,16 @@ int CCircularBuf::GetAvailableSpace()
 
 char* CCircularBuf::GetPacket( int _size )
 {
-	pthread_mutex_lock(&cir_sync);
+//	pthread_mutex_lock(&cir_sync);
 	if( m_iRear > m_iFront )
 	{
-		pthread_mutex_unlock(&cir_sync);
+	//	pthread_mutex_unlock(&cir_sync);
 		return &m_CirQueue[m_iFront];
 	}
 
 	if( m_iBufSize <= m_iFront + _size )
 	{
-		pthread_mutex_unlock(&cir_sync);
+	//	pthread_mutex_unlock(&cir_sync);
 		return &m_CirQueue[m_iFront];
 	}
 
@@ -93,22 +88,22 @@ char* CCircularBuf::GetPacket( int _size )
 	memcpy( m_szBufPacket, &m_CirQueue[m_iFront], iDivide);
 	memcpy( &m_szBufPacket[iDivide], m_CirQueue, _size - iDivide);
 
-	pthread_mutex_unlock(&cir_sync);
+//	pthread_mutex_unlock(&cir_sync);
 	return m_szBufPacket;
 }
 
 bool CCircularBuf::Push(char* _data,  int _size)
 {
-	pthread_mutex_lock(&cir_sync);
+//	pthread_mutex_lock(&cir_sync);
 	if(true == isFull())
 	{
-		pthread_mutex_unlock(&cir_sync);
+	//	pthread_mutex_unlock(&cir_sync);
 		return false;
 	}
 
 	if( _size > GetAvailableSpace() )
 	{
-		pthread_mutex_unlock(&cir_sync);
+	//	pthread_mutex_unlock(&cir_sync);
 		return false;
 	}
 
@@ -125,7 +120,7 @@ bool CCircularBuf::Push(char* _data,  int _size)
 		memcpy(&m_CirQueue[m_iRear], _data, _size);
 		m_iRear += _size;
 	}
-	pthread_mutex_unlock(&cir_sync);
+//	pthread_mutex_unlock(&cir_sync);
 	return true;
 }
 
