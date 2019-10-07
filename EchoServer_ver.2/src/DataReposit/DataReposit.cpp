@@ -8,6 +8,7 @@
 #include "DataReposit.h"
 #include <string.h>
 #include <mutex>
+
 pthread_mutex_t listlock;
 
 CDataReposit::CDataReposit() {
@@ -26,8 +27,8 @@ CDataReposit* CDataReposit::getInstance()
 {
 	if( nullptr == instance )
 	{
-		pthread_mutex_init(&listlock, NULL);
 		instance = new CDataReposit();
+		pthread_mutex_init(&listlock, NULL);
 	}
 	return instance;
 }
@@ -77,7 +78,7 @@ bool CDataReposit::DeleteData(char* _data)
 
 char* CDataReposit::PrintSendData(int num)
 {
-	pthread_mutex_lock(&listlock);
+	//pthread_mutex_lock(&listlock);
 	vector<string>::iterator iter_begin = m_listData.begin();
 	vector<string>::iterator iter_end = m_listData.end();
 	vector<string>::iterator iter = iter_begin + num;
@@ -87,10 +88,10 @@ char* CDataReposit::PrintSendData(int num)
 		char* szRedata = new char[ (*iter).size() + 1];
 		std::copy((*iter).begin(), (*iter).end(), szRedata);
 		szRedata[(*iter).size()] = '\0';
-		pthread_mutex_unlock(&listlock);
+		//pthread_mutex_unlock(&listlock);
 		return szRedata;
 	}
-	pthread_mutex_unlock(&listlock);
+	//pthread_mutex_unlock(&listlock);
 	return nullptr;
 }
 
@@ -99,12 +100,12 @@ void CDataReposit::PrintData()
 	cout << endl;
 	cout << "[DataReposit] Data list " << endl;
 	int iNum = 0;
-	pthread_mutex_lock(&listlock);
+	//pthread_mutex_lock(&listlock);
 	for(vector<string>::iterator iter = m_listData.begin(); iter != m_listData.end(); ++iter)
 	{
 		cout << "[ " << iNum++ << " ] " << *iter << endl;
 	}
-	pthread_mutex_unlock(&listlock);
+	//pthread_mutex_unlock(&listlock);
 	cout << endl;
 }
 

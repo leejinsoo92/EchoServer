@@ -284,7 +284,7 @@ void client_run()
 			if(isAuto == true)
 				usleep(100000);
 			//memset(&Packet.m_szData, 0, sizeof(MAX_PACKET_SIZE));
-			randSize = 1;//rand() % 5 + 3;
+			randSize = rand() % 35 + 3;
 			RETURN:
 
 			cout << "--------------" << endl;
@@ -298,10 +298,14 @@ void client_run()
 			cout << "select : ";
 
 			if(true == isAuto)
-				iMenu = rand() % 4 + 1;
+			{
+				iMenu = rand() % 3 + 1;
+				cout << iMenu << endl;
+			}
 			else
 				cin >> iMenu;
 
+			cout << endl;
 			if( iMenu > 5 || iMenu < 1)
 			{
 				cin.clear();
@@ -322,13 +326,14 @@ void client_run()
 					{
 						sInput += rand() % 25 + 65;
 					}
+					cout << sInput << endl;
 				}
 				else
 				{
 					cin.ignore(256, '\n');
 					getline(cin, sInput);
 				}
-				cout << endl;
+
 				PACKET_CS_ECHO packet;
 
 				strncpy(packet.m_szData, sInput.c_str(), sizeof(packet.m_szData));
@@ -347,6 +352,7 @@ void client_run()
 					for (int i = 0; i < randSize; ++i) {
 						sInput += rand() % 25 + 65;
 					}
+					cout << sInput << endl;
 				} else {
 					cin.ignore(256, '\n');
 					getline(cin, sInput);
@@ -369,6 +375,7 @@ void client_run()
 					for (int i = 0; i < randSize; ++i) {
 						sInput += rand() % 25 + 65;
 					}
+					cout << sInput << endl;
 				} else {
 					cin.ignore(256, '\n');
 					getline(cin, sInput);

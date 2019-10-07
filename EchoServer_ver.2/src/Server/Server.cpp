@@ -236,13 +236,13 @@ void CServer::Run()
 						if( -1  == m_User[j].Recv(m_iClient_Fd) )
 						{
 							cout << "Recv Error!!!" << endl;
-							m_User[j].Set_Connect(false);
-							m_User[j].Set_ConnectSock(0);
-							m_iClient_Socks[j] = 0;
-							//m_User[m_iFd]->ClearBuf();
-							epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
-							close(m_UserConnMng->m_Events[i].data.fd);
-							cout << "[+] Connection Closed < " << m_User[j].Get_ID() << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
+//							m_User[j].Set_Connect(false);
+//							m_User[j].Set_ConnectSock(0);
+//							m_iClient_Socks[j] = 0;
+//							//m_User[m_iFd]->ClearBuf();
+//							epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
+//							close(m_UserConnMng->m_Events[i].data.fd);
+//							cout << "[+] Connection Closed < " << m_User[j].Get_ID() << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
 						}
 						break;
 					}

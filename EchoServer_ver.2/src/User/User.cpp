@@ -96,6 +96,7 @@ void CUser::ProcMsg(int _fd)
 			break;
 		case CMD_USER_SAVE_REQ:
 		{
+			//pthread_mutex_lock(&data_lock);
 			PACKET_CS_SAVE* packet = (PACKET_CS_SAVE*)(head);
 
 			//cout << "recv save data : " << packet->m_szData << endl;
@@ -103,17 +104,19 @@ void CUser::ProcMsg(int _fd)
 			CDataReposit* DataList = CDataReposit::getInstance();
 
 			DataList->SaveData(packet->m_szData);
-			DataList->PrintData();
+			//DataList->PrintData();
 
 			PACKET_SC_SAVE Answer;
 
 			Answer.m_isComplete = true;
 
 			send(_fd, (char*)&Answer, sizeof(PACKET_SC_SAVE), 0);
+			//pthread_mutex_unlock(&data_lock);
 		}
 			break;
 		case CMD_USER_DELETE_REQ:
 		{
+			//pthread_mutex_lock(&data_lock);
 			PACKET_CS_DEL *packet = (PACKET_CS_DEL*) (head);
 
 			//cout << "recv delete data : " << packet->m_szData << endl;
@@ -126,9 +129,10 @@ void CUser::ProcMsg(int _fd)
 			else
 				Answer.m_isComplete = false;
 
-			DataList->PrintData();
+			//DataList->PrintData();
 
 			send(_fd, (char*) &Answer, sizeof(PACKET_SC_DEL), 0);
+			//pthread_mutex_unlock(&data_lock);
 		}
 			break;
 		case CMD_USER_PRINT_REQ:
