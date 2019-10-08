@@ -68,6 +68,13 @@ void CUser::ProcMsg(int _fd)
 		{
 			PACKET_CS_LOGIN* packet = (PACKET_CS_LOGIN*)(head);
 
+			if( strncmp( packet->m_Tail.m_szTail, gpTail, sizeof(gpTail)) != 0 )
+			{
+				m_pCirBuf->Pop( iDataSize );
+				m_isRecv = false;
+				return;
+			}
+
 			strncpy(m_szID, packet->m_szID, sizeof(m_szID));
 			cout << "user id : " << m_szID << endl;
 			PACKET_SC_LOGIN Answer;
@@ -80,6 +87,12 @@ void CUser::ProcMsg(int _fd)
 		{
 			PACKET_CS_ECHO* packet = (PACKET_CS_ECHO*)(head);
 
+			if (strncmp(packet->m_Tail.m_szTail, gpTail, sizeof(gpTail)) != 0) {
+				m_pCirBuf->Pop(iDataSize);
+				m_isRecv = false;
+				return;
+			}
+
 			PACKET_SC_ECHO Answer;
 
 			strncpy(Answer.m_szData, packet->m_szData, sizeof(Answer.m_szData));
@@ -90,6 +103,12 @@ void CUser::ProcMsg(int _fd)
 		case CMD_USER_SAVE_REQ:
 		{
 			PACKET_CS_SAVE* packet = (PACKET_CS_SAVE*)(head);
+
+			if (strncmp(packet->m_Tail.m_szTail, gpTail, sizeof(gpTail)) != 0) {
+				m_pCirBuf->Pop(iDataSize);
+				m_isRecv = false;
+				return;
+			}
 
 			CDataReposit* DataList = CDataReposit::getInstance();
 
@@ -106,6 +125,12 @@ void CUser::ProcMsg(int _fd)
 		case CMD_USER_DELETE_REQ:
 		{
 			PACKET_CS_DEL *packet = (PACKET_CS_DEL*) (head);
+
+			if (strncmp(packet->m_Tail.m_szTail, gpTail, sizeof(gpTail)) != 0) {
+				m_pCirBuf->Pop(iDataSize);
+				m_isRecv = false;
+				return;
+			}
 
 			CDataReposit *DataList = CDataReposit::getInstance();
 
@@ -124,27 +149,54 @@ void CUser::ProcMsg(int _fd)
 
 			PACKET_CS_PRINT *packet = (PACKET_CS_PRINT*) (head);
 
+			if (strncmp(packet->m_Tail.m_szTail, gpTail, sizeof(gpTail)) != 0) {
+				m_pCirBuf->Pop(iDataSize);
+				m_isRecv = false;
+				return;
+			}
+
 			CDataReposit *DataList = CDataReposit::getInstance();
 
 			PACKET_SC_PRINT Answer;
 
-			if(DataList->PrintSendData(m_iPrintCnt) == nullptr)
-			{
-				Answer.m_isComplete = true;
-				const char* temp = "finish";
-				strncpy(Answer.m_szData, temp, sizeof(Answer.m_szData));
-				Answer.m_szData[6] = '\0';
-				send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
-				m_iPrintCnt = 0;
-				break;
-			}
-			else
+
+			memcpy(Answer.m_szData, DataList->PrintSend(), MAX_PACKET_SIZE);
+
+//			cout << "print cnt : " << Answer.m_iPrintCnt  << endl;
+			cout << "data : " << Answer.m_szData << endl;
+			if( false == DataList->Get_isEnd() )
 			{
 				Answer.m_isComplete = false;
-				strncpy(Answer.m_szData, DataList->PrintSendData(m_iPrintCnt), sizeof(Answer.m_szData));
+				Answer.m_iPrintCnt = DataList->Get_PrintCnt();
+
 				send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
 			}
-				m_iPrintCnt++;
+			else if( true == DataList->Get_isEnd() )
+			{
+				Answer.m_isComplete = true;
+				Answer.m_iPrintCnt = DataList->Get_PrintCnt();
+				send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
+
+				DataList->Set_PrintCnt(0);
+			}
+
+//			if(DataList->PrintSendData(m_iPrintCnt) == nullptr)
+//			{
+//				Answer.m_isComplete = true;
+//				const char* temp = "finish";
+//				strncpy(Answer.m_szData, temp, sizeof(Answer.m_szData));
+//				Answer.m_szData[6] = '\0';
+//				send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
+//				m_iPrintCnt = 0;
+//				break;
+//			}
+//			else
+//			{
+//				Answer.m_isComplete = false;
+//				strncpy(Answer.m_szData, DataList->PrintSendData(m_iPrintCnt), sizeof(Answer.m_szData));
+//				send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
+//			}
+//			m_iPrintCnt++;
 
 		}
 			break;

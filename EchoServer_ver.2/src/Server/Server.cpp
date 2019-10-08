@@ -100,12 +100,12 @@ void CServer::Run()
 	}
 	pthread_detach(Thread_Work);
 
-	m_iThrStatus = pthread_create(&Thread_User, NULL, Thread_UserCheck, (void*)this);
-	if (m_iThrStatus < 0) {
-		perror("Thread UserCheck Create Error!!");
-		exit(0);
-	}
-	pthread_detach(Thread_User);
+//	m_iThrStatus = pthread_create(&Thread_User, NULL, Thread_UserCheck, (void*)this);
+//	if (m_iThrStatus < 0) {
+//		perror("Thread UserCheck Create Error!!");
+//		exit(0);
+//	}
+//	pthread_detach(Thread_User);
 
 	while (1)
 	{

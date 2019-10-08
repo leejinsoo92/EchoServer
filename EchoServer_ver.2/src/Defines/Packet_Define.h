@@ -172,6 +172,7 @@ struct PACKET_SC_PRINT
 
 	char				m_szData[MAX_PACKET_SIZE];
 	bool				m_isComplete = false;
+	int					m_iPrintCnt = 0;
 
 	PACKET_TAIL		m_Tail;
 

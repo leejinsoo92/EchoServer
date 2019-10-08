@@ -12,6 +12,8 @@
 #include <list>
 #include <vector>
 
+#define MAX_PACKET_SIZE 8096
+
 using namespace std;
 
 class CDataReposit {
@@ -30,10 +32,28 @@ public:
 	bool SaveData(char* _data);
 	bool DeleteData(char* _data);
 	char* PrintSendData(int num);
+	char* PrintSend();
 	void PrintData();
+
+	bool Get_isEnd(){
+		return m_isEnd;
+	}
+
+	int Get_PrintCnt(){
+		return m_iPrintCnt;
+	}
+
+	void Set_PrintCnt(int _cnt){
+		m_iPrintCnt = _cnt;
+	}
 
 private:
 	int test = 0;
+	char m_szPrintBuf[MAX_PACKET_SIZE]; // 리턴하는 버퍼
+	char m_szTempBuf[MAX_PACKET_SIZE]; // 임시로 저장해두는 버퍼
+	int m_iPrintCnt = 0;
+	int m_iRear = 0;
+	bool m_isEnd = false;
 	vector<string> m_listData;
 
 };
