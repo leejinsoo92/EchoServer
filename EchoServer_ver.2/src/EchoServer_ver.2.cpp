@@ -13,7 +13,7 @@
 using namespace std;
 
 int main() {
-	cout << "!!!Hello Server!!!" << endl; // prints !!!Hello World!!!
+	cout << "!!!Hello Server!!!" << endl;
 
 	CServer EchoServer = CServer();
 

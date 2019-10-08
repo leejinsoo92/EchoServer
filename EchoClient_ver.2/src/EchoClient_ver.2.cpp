@@ -21,38 +21,20 @@
 #include <time.h>
 #include <string.h>
 #include "CircularBuf.h"
-//#include "Packet_Define.h"
 
 #include <iostream>
 using namespace std;
 
-//8080
-//9190
 #define DEFAULT_PORT	8080
 #define MAX_CONN		16
 #define MAX_EVENTS	32
 #define BUF_SIZE		16
 #define MAX_LINE		256
 #define SERVER_IP		"192.168.8.39"
-//#define SERVER_IP		"127.0.0.1"
-
-struct CIR_BUF
-{
-	char szTempBuf[1024 * 32];
-	int iFront = 0;
-	int iRear = 0;
-	int iMaxSize = 0;
-
-	CIR_BUF()
-	{
-		iMaxSize = 1024 * 32;
-	}
-};
 
 void client_run();
 static void set_sockaddr(struct sockaddr_in *addr);
 int Set_NonBlocking(int iSockfd);
-int RecvFromServer(int sockfd, char* buf, int buf_size, CIR_BUF* pCirBuf);
 
 int main()
 {
@@ -79,7 +61,6 @@ void client_run()
 
 	CCircularBuf* m_pCirBuf = new CCircularBuf();
 
-	//CIR_BUF pCirBuf;
 	char szRecvBuf[MAX_PACKET_SIZE] = { } ;
 
 	srand(time(NULL));
@@ -119,8 +100,6 @@ void client_run()
 	fgets(Login_Packet.m_szID, sizeof(Login_Packet.m_szID), stdin);
 	iData_Len = strlen(Login_Packet.m_szID) - 1;
 
-//	sID = "TEST";
-//	strcpy(Login_Packet.m_szID, sID.c_str());
 	Login_Packet.m_szID[iData_Len] = '\0';
 
 	send(sockfd, (char*)&Login_Packet, sizeof(PACKET_CS_LOGIN), 0);
@@ -135,8 +114,8 @@ void client_run()
 		PACKET_HEAD *head;
 		if(isSend == true)
 		{
-			usleep(100000);
 			RECV_BACK:
+			usleep(100000);
 			int iRecvLen = 0;
 			while (1) {
 				iRecvLen = recv(sockfd, szRecvBuf, sizeof(szRecvBuf), 0);
@@ -152,27 +131,11 @@ void client_run()
 				{
 					m_pCirBuf->Push( szRecvBuf, iRecvLen );
 
-//					if( pCirBuf.iMaxSize < pCirBuf.iRear + iRecvLen )
-//					{
-//						int iDivide = pCirBuf.iMaxSize - pCirBuf.iRear;
-//						memcpy(&pCirBuf.szTempBuf[pCirBuf.iRear], szRecvBuf, iDivide);
-//
-//						pCirBuf.iRear = iRecvLen - iDivide;
-//						memcpy(pCirBuf.szTempBuf, szRecvBuf + iDivide, pCirBuf.iRear);
-//					}
-//					else
-//					{
-//						memcpy(&pCirBuf.szTempBuf[pCirBuf.iRear], szRecvBuf, iRecvLen);
-//						pCirBuf.iRear += iRecvLen;
-//					}
 				}
 			}
 
-			//head = (PACKET_HEAD*)(&pCirBuf.szTempBuf[pCirBuf.iFront]);
 			head = (PACKET_HEAD*)m_pCirBuf->GetPacket(sizeof(PACKET_HEAD));
 			PACKET_TAIL* tail = (PACKET_TAIL*)(head + head->m_iPacketSize - sizeof(PACKET_TAIL));
-			//PACKET* packet = (PACKET*)(head);
-
 
 			if( m_pCirBuf->isEmpty() )
 			{
@@ -185,20 +148,10 @@ void client_run()
 				goto RECV_BACK;
 			}
 
-
-			//strncmp(tail->m_szTail, gpTail, sizeof(gpTail)) != 0
 			if( strncmp(head->m_szHead, gpHead, sizeof(gpHead)) != 0 )
 			{
 				m_pCirBuf->Pop( iDataSize );
-
-//				if( pCirBuf.iMaxSize < pCirBuf.iFront + head->m_iPacketSize )
-//					pCirBuf.iFront = head->m_iPacketSize - ( pCirBuf.iMaxSize - pCirBuf.iFront );
-//				else
-//					pCirBuf.iFront += head->m_iPacketSize;
-
-
 				goto RECV_BACK;
-				//isSend = false;
 			}
 
 
@@ -262,28 +215,25 @@ void client_run()
 				{
 					cout << "Reposit  : " << packet->m_szData << endl;
 					isPrintFinish = false;
+					isSend = false;
+					m_pCirBuf->Pop( head->m_iPacketSize );
 					//usleep(100000);
+					goto RE_PRINT;
 				}
 
 			}
 			break;
 			}
 			m_pCirBuf->Pop( head->m_iPacketSize );
-//			if( pCirBuf.iMaxSize < pCirBuf.iFront + head->m_iPacketSize )
-//				pCirBuf.iFront = head->m_iPacketSize - ( pCirBuf.iMaxSize - pCirBuf.iFront );
-//			else
-//				pCirBuf.iFront += head->m_iPacketSize;
 
 		}
-
-
 
 		//system("clear");
 		if(isSend == false )
 		{
 			if(isAuto == true)
 				usleep(100000);
-			//memset(&Packet.m_szData, 0, sizeof(MAX_PACKET_SIZE));
+
 			randSize = rand() % 35 + 3;
 			RETURN:
 
@@ -299,8 +249,7 @@ void client_run()
 
 			if(true == isAuto)
 			{
-				iMenu = rand() % 3 + 1;
-				cout << iMenu << endl;
+				iMenu = rand() % 4 + 1;
 			}
 			else
 				cin >> iMenu;
@@ -393,9 +342,8 @@ void client_run()
 				break;
 			case 4:
 			{
+				RE_PRINT:
 				PACKET_CS_PRINT packet;
-
-				cout << "Ask Struct Data to Client~" << endl;
 
 				send(sockfd, (char*) &packet, sizeof(PACKET_CS_PRINT), 0);
 				isSend = true;
@@ -418,7 +366,7 @@ static void set_sockaddr(struct sockaddr_in *addr)
 {
 	bzero((char*)addr, sizeof(struct sockaddr_in));
 	addr->sin_family	= AF_INET;
-	addr->sin_addr.s_addr = inet_addr(SERVER_IP);//INADDR_ANY;inet_addr(SERVER_IP);
+	addr->sin_addr.s_addr = inet_addr(SERVER_IP);
 	addr->sin_port = htons(DEFAULT_PORT);
 }
 
@@ -426,32 +374,6 @@ int Set_NonBlocking(int iSockfd)
 {
 	if(fcntl(iSockfd, F_SETFL, fcntl(iSockfd, F_GETFD, 0) | O_NONBLOCK) == -1)
 		return -1;
-	return 0;
-}
-
-int RecvFromServer(int sockfd, char* buf, int buf_size, CIR_BUF* pCirBuf)
-{
-	int iRecvLen = 0;
-	char recvBuf[MAX_PACKET_SIZE];
-	while (1) {
-		iRecvLen = recv(sockfd, recvBuf, sizeof(recvBuf), 0);
-
-		if (iRecvLen == 0)
-			return -1;
-		else if (iRecvLen <= 0)
-		{
-			if ( errno == EAGAIN)
-				break;
-		}
-		else
-		{
-			if(pCirBuf->iRear + iRecvLen > pCirBuf->iMaxSize)
-				pCirBuf->iRear = 0;
-
-			memcpy( &pCirBuf->szTempBuf[pCirBuf->iRear], recvBuf, iRecvLen);
-			pCirBuf->iRear += iRecvLen;
-		}
-	}
 	return 0;
 }
 

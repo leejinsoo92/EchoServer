@@ -11,7 +11,6 @@
 #include "../Mng/EpollMng/UserMng/UserMng.h"
 #include "../User/User.h"
 #include <iostream>
-#include <unordered_map>
 #include <pthread.h>
 
 #define USER_NUM 1000
@@ -36,8 +35,6 @@ private:
 	CUserMng* 		m_UserConnMng;
 	CUser			m_User[USER_NUM];
 
-	//unordered_map<int, CUser*> m_UserHash;
-
 	struct sockaddr_in m_Client_Addr;
 
 private:
@@ -54,16 +51,13 @@ private:
 
 	int m_iString_Len = 0;
 	int m_iData_Len = 0;
-
 	int m_iEvent_Num = 0;
 
 private:
 	bool isprint = false;
 	bool isDelFind = false;
 	bool isSaveFind = false;
-
 	bool isBreak = false;
-
 
 	int m_iFd = 0;
 
@@ -71,7 +65,6 @@ private:
 private:
 	pthread_t Thread_Work = 0;
 	pthread_t Thread_User = 0;
-	pthread_attr_t attr;
 
 	int m_iThrStatus = 0;
 };

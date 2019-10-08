@@ -26,7 +26,6 @@ public:
 	char* GetPacket(int _size);
 	bool Push(char* _data, int _size);
 	void Pop(int _size);
-	void Print();
 
 private:
 	int m_iBufSize 	= 0;

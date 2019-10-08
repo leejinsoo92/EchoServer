@@ -27,7 +27,7 @@ public:
 
 public:
 	bool isEmpty();
-	void SaveData(char* _data);
+	bool SaveData(char* _data);
 	bool DeleteData(char* _data);
 	char* PrintSendData(int num);
 	void PrintData();

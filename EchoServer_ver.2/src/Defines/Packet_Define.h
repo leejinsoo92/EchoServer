@@ -182,21 +182,5 @@ struct PACKET_SC_PRINT
 	}
 };
 
-//struct PACKET
-//{
-//	PACKET_HEAD		m_Head;
-//
-//	unsigned short 	m_nSock_ID = 0;
-//	char				m_szID[16];
-//	char				m_szData[MAX_PACKET_SIZE];
-//	int 				m_iSize = 0;
-//
-//	PACKET_TAIL		m_Tail;
-//
-//	PACKET()
-//	{
-//		m_Head.m_iPacketSize = sizeof(PACKET);
-//	}
-//};
 #pragma pack(pop)
 

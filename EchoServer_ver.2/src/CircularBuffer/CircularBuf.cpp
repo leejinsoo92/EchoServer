@@ -144,9 +144,3 @@ void CCircularBuf::Pop( int _size )
 		m_iFront = m_iRear = 0;
 	pthread_mutex_unlock(&cir_sync);
 }
-
-
-void CCircularBuf::Print()
-{
-
-}

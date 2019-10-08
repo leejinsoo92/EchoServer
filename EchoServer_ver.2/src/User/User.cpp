@@ -55,11 +55,6 @@ void CUser::ProcMsg(int _fd)
 			return;
 		}
 
-		//int iTailSize = head->m_iPacketSize - sizeof(PACKET_TAIL);
-		//PACKET_TAIL* tail = (PACKET_TAIL*)m_pCirBuf->GetPacket(iTailSize);
-//		PACKET_TAIL* tail = (PACKET_TAIL*)(head + head->m_iPacketSize - sizeof(PACKET_TAIL));
-
-		//strncmp( tail->m_szTail, gpTail, sizeof(gpTail)) != 0
 		if( strncmp( head->m_szHead, gpHead, sizeof(gpHead)) != 0 )
 		{
 			m_pCirBuf->Pop( iDataSize );
@@ -85,8 +80,6 @@ void CUser::ProcMsg(int _fd)
 		{
 			PACKET_CS_ECHO* packet = (PACKET_CS_ECHO*)(head);
 
-			//cout << "recv echo data : " << packet->m_szData << endl;
-
 			PACKET_SC_ECHO Answer;
 
 			strncpy(Answer.m_szData, packet->m_szData, sizeof(Answer.m_szData));
@@ -96,30 +89,23 @@ void CUser::ProcMsg(int _fd)
 			break;
 		case CMD_USER_SAVE_REQ:
 		{
-			//pthread_mutex_lock(&data_lock);
 			PACKET_CS_SAVE* packet = (PACKET_CS_SAVE*)(head);
-
-			//cout << "recv save data : " << packet->m_szData << endl;
 
 			CDataReposit* DataList = CDataReposit::getInstance();
 
-			DataList->SaveData(packet->m_szData);
-			//DataList->PrintData();
-
 			PACKET_SC_SAVE Answer;
-
-			Answer.m_isComplete = true;
+			if( true == DataList->SaveData(packet->m_szData) )
+				Answer.m_isComplete = true;
+			else
+				Answer.m_isComplete = false;
 
 			send(_fd, (char*)&Answer, sizeof(PACKET_SC_SAVE), 0);
-			//pthread_mutex_unlock(&data_lock);
+
 		}
 			break;
 		case CMD_USER_DELETE_REQ:
 		{
-			//pthread_mutex_lock(&data_lock);
 			PACKET_CS_DEL *packet = (PACKET_CS_DEL*) (head);
-
-			//cout << "recv delete data : " << packet->m_szData << endl;
 
 			CDataReposit *DataList = CDataReposit::getInstance();
 
@@ -129,41 +115,37 @@ void CUser::ProcMsg(int _fd)
 			else
 				Answer.m_isComplete = false;
 
-			//DataList->PrintData();
-
 			send(_fd, (char*) &Answer, sizeof(PACKET_SC_DEL), 0);
-			//pthread_mutex_unlock(&data_lock);
+
 		}
 			break;
 		case CMD_USER_PRINT_REQ:
 		{
-			//pthread_mutex_lock(&data_lock);
+
 			PACKET_CS_PRINT *packet = (PACKET_CS_PRINT*) (head);
 
 			CDataReposit *DataList = CDataReposit::getInstance();
-			int iPrintCnt = 0;
-			while(1)
+
+			PACKET_SC_PRINT Answer;
+
+			if(DataList->PrintSendData(m_iPrintCnt) == nullptr)
 			{
-				PACKET_SC_PRINT Answer;
-
-				if(DataList->PrintSendData(iPrintCnt) == nullptr)
-				{
-					Answer.m_isComplete = true;
-					const char* temp = "finish";
-					strncpy(Answer.m_szData, temp, sizeof(Answer.m_szData));
-					Answer.m_szData[6] = '\0';
-					send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
-					break;
-				}
-
-				Answer.m_isComplete = false;
-				strncpy(Answer.m_szData, DataList->PrintSendData(iPrintCnt), sizeof(Answer.m_szData));
+				Answer.m_isComplete = true;
+				const char* temp = "finish";
+				strncpy(Answer.m_szData, temp, sizeof(Answer.m_szData));
+				Answer.m_szData[6] = '\0';
 				send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
-
-				iPrintCnt++;
-				usleep(100000);
+				m_iPrintCnt = 0;
+				break;
 			}
-			//pthread_mutex_unlock(&data_lock);
+			else
+			{
+				Answer.m_isComplete = false;
+				strncpy(Answer.m_szData, DataList->PrintSendData(m_iPrintCnt), sizeof(Answer.m_szData));
+				send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
+			}
+				m_iPrintCnt++;
+
 		}
 			break;
 		case CMD_USER_ERR:

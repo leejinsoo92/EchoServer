@@ -44,7 +44,6 @@ void CEpoll_Manager::Epoll_Ctl(int* iEpfd, int iOption, int* iFd, uint32_t iEven
 
 void CEpoll_Manager::Set_Sockaddr(struct sockaddr_in *addr)
 {
-	//bzero((char*)addr, sizeof(struct sockaddr_in));
 	memset(addr, 0, sizeof(sockaddr_in));
 	addr->sin_family 			= AF_INET;
 	addr->sin_addr.s_addr 	= htonl(INADDR_ANY);
