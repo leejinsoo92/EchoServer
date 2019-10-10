@@ -313,7 +313,7 @@ void client_run()
 
 			if(true == isAuto)
 			{
-				iMenu = 2;//rand() % 4 + 1;
+				iMenu = rand() % 4 + 1;
 			}
 			else
 				cin >> iMenu;
