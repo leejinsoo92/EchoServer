@@ -52,6 +52,11 @@ void client_run()
 	bool isAuto = true;
 	bool isPrintFinish = false;
 
+	int iRepositCnt = 0;
+	int iCntCheck = 0;
+
+	int iTotalRecvSize = 0;
+
 	string loginTemp = "login request";
 	string printTemp = "print request";
 	string sID;
@@ -207,15 +212,27 @@ void client_run()
 				{
 					int iCnt = 0;
 					int iStringCnt = 0;
+					iTotalRecvSize += sizeof(packet->m_szData);
 					while (1) {
 						if (packet->m_szData[iCnt] == '\0') {
 							++iStringCnt;
+							++iCntCheck;
 							cout << endl;
+
 						} else
+						{
+							if(iCntCheck == iRepositCnt)
+							{
+								cout << "[ " << iRepositCnt + 1 << " ] ";
+								++iRepositCnt;
+							}
 							cout << packet->m_szData[iCnt];
+						}
 
 						if (iStringCnt >= packet->m_iPrintCnt)
+						{
 							break;
+						}
 						++iCnt;
 					}
 
@@ -224,25 +241,38 @@ void client_run()
 //					isSend = false;
 //					m_pCirBuf->Pop(head->m_iPacketSize);
 
+					cout << "Total Recv Size : " << iTotalRecvSize << endl;
+					cout << "packet size : " << head->m_iPacketSize << endl;
+					iTotalRecvSize = 0;
+					iCntCheck = 0;
+					iRepositCnt = 0;
 					cout << endl;
 					cout << "<< Print Finish! >>" << endl;
 					cout << endl;
 					isSend = false;
-					isPrintFinish = true;
 				}
 				else
 				{
 					int iCnt = 0;
 					int iStringCnt = 0;
+
+					iTotalRecvSize += sizeof(packet->m_szData);
 					while(1)
 					{
 						if( packet->m_szData[iCnt] == '\0')
 						{
 							++iStringCnt;
+							++iCntCheck;
 							cout << endl;
 						}
 						else
+						{
+							if (iCntCheck == iRepositCnt) {
+								cout << "[ " << iRepositCnt + 1 << " ] ";
+								++iRepositCnt;
+							}
 							cout << packet->m_szData[iCnt];
+						}
 
 						if(iStringCnt >= packet->m_iPrintCnt)
 							break;
@@ -250,17 +280,14 @@ void client_run()
 					}
 
 
-					//cout << "Reposit  : " << packet->m_szData << endl;
-					isPrintFinish = false;
-					isSend = false;
 					m_pCirBuf->Pop( head->m_iPacketSize );
-					//usleep(100000);
 					goto RE_PRINT;
 				}
 
 			}
 			break;
 			}
+
 			m_pCirBuf->Pop( head->m_iPacketSize );
 
 		}
@@ -271,7 +298,7 @@ void client_run()
 			if(isAuto == true)
 				usleep(100000);
 
-			randSize = rand() % 35 + 3;
+			randSize = rand() % 7 + 3;
 			RETURN:
 
 			cout << "--------------" << endl;
@@ -286,7 +313,7 @@ void client_run()
 
 			if(true == isAuto)
 			{
-				iMenu = rand() % 4 + 1;
+				iMenu = 2;//rand() % 4 + 1;
 			}
 			else
 				cin >> iMenu;
