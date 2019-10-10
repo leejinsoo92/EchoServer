@@ -113,7 +113,7 @@ char* CDataReposit::PrintSend()
 	vector<string>::iterator iter_begin = m_listData.begin();
 	vector<string>::iterator iter_end = m_listData.end();
 	vector<string>::iterator iter = iter_begin + m_iPrintCnt;
-
+	m_iCurrentCnt = 0;
 	while(1)
 	{
 		if( iter != iter_end )
@@ -125,16 +125,10 @@ char* CDataReposit::PrintSend()
 				break;
 			}
 
-//			if( iter + 1 == iter_end )
-//			{
-//				m_iRear = 0;
-//				m_isEnd = true;
-//				break;
-//			}
-
 			std::copy((*iter).begin(), (*iter).end(), m_szTempBuf + m_iRear);
 			m_szTempBuf[m_iRear + (*iter).size()] = '\0';
 			++m_iPrintCnt;
+			++m_iCurrentCnt;
 			m_iRear += (*iter).size() + 1;
 		}
 		else
@@ -148,9 +142,9 @@ char* CDataReposit::PrintSend()
 
 	memset(m_szPrintBuf, 0, sizeof(MAX_PACKET_SIZE)); // 보내는 버퍼 초기화
 	memcpy(m_szPrintBuf, m_szTempBuf, sizeof(m_szTempBuf)); // 임시 버퍼 -> 보내는 버퍼
-	cout << "temp size : " << sizeof(m_szTempBuf) << endl;
 	memset(m_szTempBuf, 0, sizeof(MAX_PACKET_SIZE)); // 임시 버퍼 초기화
-	cout << "printbuf size : " << sizeof(m_szPrintBuf) << endl;
+
+	pthread_mutex_unlock(&listlock);
 	return m_szPrintBuf;
 
 	return nullptr;
@@ -160,7 +154,7 @@ void CDataReposit::PrintData()
 {
 	cout << endl;
 	cout << "[DataReposit] Data list " << endl;
-	int iNum = 0;
+	int iNum = 1;
 	for(vector<string>::iterator iter = m_listData.begin(); iter != m_listData.end(); ++iter)
 	{
 		cout << "[ " << iNum++ << " ] " << *iter << endl;

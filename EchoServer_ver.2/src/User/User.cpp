@@ -157,28 +157,39 @@ void CUser::ProcMsg(int _fd)
 
 			CDataReposit *DataList = CDataReposit::getInstance();
 
-			PACKET_SC_PRINT Answer;
 
 
-			memcpy(Answer.m_szData, DataList->PrintSend(), MAX_PACKET_SIZE);
+			//while(1)
+			//{
 
-//			cout << "print cnt : " << Answer.m_iPrintCnt  << endl;
-			cout << "data : " << Answer.m_szData << endl;
-			if( false == DataList->Get_isEnd() )
-			{
-				Answer.m_isComplete = false;
-				Answer.m_iPrintCnt = DataList->Get_PrintCnt();
+				PACKET_SC_PRINT Answer;
+				memcpy(Answer.m_szData, DataList->PrintSend(), sizeof(Answer.m_szData));
 
-				send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
-			}
-			else if( true == DataList->Get_isEnd() )
-			{
-				Answer.m_isComplete = true;
-				Answer.m_iPrintCnt = DataList->Get_PrintCnt();
-				send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
+	//			cout << "print cnt : " << Answer.m_iPrintCnt  << endl;
+				//cout << "data : " << Answer.m_szData << endl;
+				if( false == DataList->Get_isEnd() )
+				{
+					Answer.m_isComplete = false;
+					Answer.m_iPrintCnt = DataList->Get_CurrentCnt();
 
-				DataList->Set_PrintCnt(0);
-			}
+					send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
+					//cout << "Repository (false)  : " << endl << Answer.m_szData << endl;
+
+				}
+				else if( true == DataList->Get_isEnd() )
+				{
+					Answer.m_isComplete = true;
+					Answer.m_iPrintCnt = DataList->Get_CurrentCnt();
+					send(_fd, (char*) &Answer, sizeof(PACKET_SC_PRINT), 0);
+					//cout << "Repository (true) : " << endl << Answer.m_szData << endl;
+					DataList->Set_PrintCnt(0);
+					DataList->Set_isEnd(false);
+
+					break;
+				}
+
+			//}
+
 
 //			if(DataList->PrintSendData(m_iPrintCnt) == nullptr)
 //			{

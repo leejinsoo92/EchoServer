@@ -59,6 +59,7 @@ private:
 	int m_iCirbufSize = 0;
 
 	int m_iPrintCnt = 0;
+	int m_iCurCnt = 0;
 	char m_szID[16];
 private:
 	CCircularBuf* m_pCirBuf;
