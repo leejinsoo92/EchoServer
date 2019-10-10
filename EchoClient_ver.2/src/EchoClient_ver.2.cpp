@@ -64,6 +64,9 @@ void client_run()
 
 	int randSize = 0;
 
+	int iOptval = 0;
+	//int iOptlen = sizeof(iOptval);
+
 	CCircularBuf* m_pCirBuf = new CCircularBuf();
 
 	char szRecvBuf[MAX_PACKET_SIZE] = { } ;
@@ -73,6 +76,10 @@ void client_run()
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
 	set_sockaddr(&srv_addr);
+
+	iOptval = 1024000;
+	setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, (char*)&iOptval, sizeof(iOptval));
+	setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (char*)&iOptval, sizeof(iOptval));
 
 	if(connect(sockfd, (struct sockaddr*)&srv_addr, sizeof(srv_addr)) < 0)
 	{
@@ -126,7 +133,13 @@ void client_run()
 				iRecvLen = recv(sockfd, szRecvBuf, sizeof(szRecvBuf), 0);
 
 				if (iRecvLen == 0)
+				{
+					puts("ERROR  : 서버로 부터 연결이 끊어졌습니다.");
+					puts("SYSTEM : Client를 종료합니다.");
+					close(sockfd);
+					exit(1);
 					continue;
+				}
 				else if (iRecvLen < 0)
 				{
 					if ( errno == EAGAIN)
@@ -236,13 +249,6 @@ void client_run()
 						++iCnt;
 					}
 
-					//cout << "Reposit  : " << packet->m_szData << endl;
-//					isPrintFinish = false;
-//					isSend = false;
-//					m_pCirBuf->Pop(head->m_iPacketSize);
-
-					cout << "Total Recv Size : " << iTotalRecvSize << endl;
-					cout << "packet size : " << head->m_iPacketSize << endl;
 					iTotalRecvSize = 0;
 					iCntCheck = 0;
 					iRepositCnt = 0;
@@ -284,6 +290,19 @@ void client_run()
 					goto RE_PRINT;
 				}
 
+			}
+			break;
+			case CMD_USER_ERR:
+			{
+				PACKET_SC_LOGINERR* packet = (PACKET_SC_LOGINERR*)(head);
+				if( false == packet->m_isComplete )
+				{
+					cout << "SYSTEM : 서버 인원이 꽉차서 접속할 수 없습니다." << endl;
+					close(sockfd);
+					cout << "SYSTEM : Client를 종료합니다." << endl;
+					usleep(10000);
+					exit(1);
+				}
 			}
 			break;
 			}
@@ -371,6 +390,7 @@ void client_run()
 					getline(cin, sInput);
 				}
 				cout << endl;
+
 				PACKET_CS_SAVE packet;
 
 				strncpy(packet.m_szData, sInput.c_str(), sizeof(packet.m_szData));

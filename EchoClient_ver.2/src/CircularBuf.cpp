@@ -15,7 +15,7 @@ using namespace std;
 
 CCircularBuf::CCircularBuf() {
 	// TODO Auto-generated constructor stub
-	m_iBufSize = 1024 * 32; // 32kbytes
+	m_iBufSize = 1024 * 64; // 32kbytes
 	m_CirQueue = new char[m_iBufSize];
 }
 CCircularBuf::CCircularBuf(int _iBufSize)
