@@ -18,7 +18,7 @@ pthread_mutex_t cir_sync;
 
 CCircularBuf::CCircularBuf() {
 	// TODO Auto-generated constructor stub
-	m_iBufSize = 1024 * 32; // 32kbytes
+	m_iBufSize = 1024 * 64; // 64kbytes
 	m_iFront 		= 0;
 	m_iRear 		= 0;
 	m_CirQueue = new char[m_iBufSize];

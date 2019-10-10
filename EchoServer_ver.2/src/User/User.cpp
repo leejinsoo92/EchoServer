@@ -31,6 +31,13 @@ CUser::~CUser() {
 	m_pCirBuf = nullptr;
 }
 
+void CUser::LoginErrMsg(int _fd)
+{
+	PACKET_SC_LOGINERR Answer;
+	Answer.m_isComplete = false;
+	send(_fd, (char*)&Answer, sizeof(PACKET_SC_LOGINERR), 0);
+}
+
 void CUser::ProcMsg(int _fd)
 {
 	while(1)

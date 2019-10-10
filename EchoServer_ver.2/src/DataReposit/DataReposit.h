@@ -12,7 +12,7 @@
 #include <list>
 #include <vector>
 
-#define MAX_PACKET_SIZE 8096
+#define MAX_PACKET_SIZE 10240
 
 using namespace std;
 

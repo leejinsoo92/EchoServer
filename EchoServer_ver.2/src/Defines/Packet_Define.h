@@ -10,7 +10,7 @@
 #define CMD_USER_PRINT_RESULT	0x0A
 #define CMD_USER_ERR				0x0B
 
-#define MAX_PACKET_SIZE 8096
+#define MAX_PACKET_SIZE 10240
 
 const char gpHead[5] = {'A', 'A', '1', '1'};
 const char gpTail[5] = {'1', '1', 'A', 'A'};
@@ -180,6 +180,21 @@ struct PACKET_SC_PRINT
 	{
 		m_Head.m_iPacketSize = sizeof(PACKET_SC_PRINT);
 		m_Head.m_nCMD = CMD_USER_PRINT_RESULT;
+	}
+};
+
+struct PACKET_SC_LOGINERR
+{
+	PACKET_HEAD		m_Head;
+
+	bool				m_isComplete = false;
+
+	PACKET_TAIL		m_Tail;
+
+	PACKET_SC_LOGINERR()
+	{
+		m_Head.m_iPacketSize = sizeof(PACKET_SC_LOGINERR);
+		m_Head.m_nCMD = CMD_USER_ERR;
 	}
 };
 

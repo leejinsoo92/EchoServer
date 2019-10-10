@@ -33,6 +33,13 @@ bool CUserMng::Client_Connect(int* _iEpfd, int* _iListen_Scok)
 
 	CEpoll_Manager::Set_Sockaddr(&m_Server_Addr);
 
+	m_iOptval = 1024000;
+	setsockopt(*_iListen_Scok, SOL_SOCKET, SO_SNDBUF, (char*)&m_iOptval, sizeof(m_iOptval));
+	setsockopt(*_iListen_Scok, SOL_SOCKET, SO_RCVBUF, (char*)&m_iOptval, sizeof(m_iOptval));
+
+	m_iOptval = 1;
+	setsockopt(*_iListen_Scok, SOL_SOCKET, SO_REUSEADDR, (char*)&m_iOptval, sizeof(m_iOptval));
+
 	if( bind(*_iListen_Scok, (struct sockaddr*)&m_Server_Addr, sizeof(m_Server_Addr)) == -1 )
 	{
 		perror("[+] - ERROR : bind Error");

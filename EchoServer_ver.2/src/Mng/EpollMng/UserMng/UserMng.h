@@ -28,6 +28,9 @@ public:
 public:
 	//struct epoll_event m_Events[MAX_EVENTS];
 	struct epoll_event* m_Events;
+
+private:
+	int m_iOptval = 0;
 };
 
 #endif /* USERMNG_USERMNG_H_ */

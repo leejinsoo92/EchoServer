@@ -45,6 +45,7 @@ public:
 	}
 
 public:
+	void LoginErrMsg(int _fd);
 	void ProcMsg(int _fd);
 	int Recv(int _fd);
 
@@ -59,7 +60,6 @@ private:
 	int m_iCirbufSize = 0;
 
 	int m_iPrintCnt = 0;
-	int m_iCurCnt = 0;
 	char m_szID[16];
 private:
 	CCircularBuf* m_pCirBuf;

@@ -72,9 +72,12 @@ void* CServer::Thread_UserCheck(void* arg)
 			if( true == (((CServer*) arg)->m_User[i]).Get_Connect() )
 			{
 				iUserCnt++;
+
+
 				//cout << "ID :" << ((CServer*) arg)->m_User[i].Get_ID() << endl;
 			}
 		}
+		((CServer*) arg)->m_iCurUserCnt = iUserCnt;
 		cout << endl;
 		cout << " 현재 접속해 있는 유저 수 : " << iUserCnt << " 명" << endl;
 
@@ -125,16 +128,23 @@ void CServer::Run()
 				m_UserConnMng->Epoll_Ctl(&m_iEpfd, EPOLL_CTL_ADD, &m_iClient_Fd, EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP);
 				cout << "[+] Connect with" << " : " << inet_ntoa(clientaddr.sin_addr) << endl;
 
-				for(int j = 0; j < USER_NUM; ++j)
+				cout << "테스트 현재 접속 유저 인원수 : " << m_iCurUserCnt << endl;
+				if( m_iCurUserCnt == USER_NUM )
+					m_ErrClass.LoginErrMsg(m_iClient_Fd);
+				else
 				{
-					if(m_iClient_Socks[j] == 0)
+					for(int j = 0; j < USER_NUM; ++j)
 					{
-						m_iClient_Socks[j] = m_iClient_Fd;
-						m_User[j].Set_Connect(true);
-						m_User[j].Set_ConnectSock(m_iClient_Fd);
-						break;
+						if(m_iClient_Socks[j] == 0)
+						{
+							m_iClient_Socks[j] = m_iClient_Fd;
+							m_User[j].Set_Connect(true);
+							m_User[j].Set_ConnectSock(m_iClient_Fd);
+							break;
+						}
 					}
 				}
+
 			}
 
 			else
@@ -163,18 +173,20 @@ void CServer::Run()
 
 			if (m_UserConnMng->m_Events[i].events & (EPOLLRDHUP | EPOLLHUP))
 			{
-
 				for(int j = 0; j < USER_NUM; ++j)
 				{
 					if( m_UserConnMng->m_Events[i].data.fd == m_User[j].Get_ConnectSock() )
 					{
-						m_User[j].Set_Connect(false);
-						m_User[j].Set_ConnectSock(0);
+						//if(true == m_User[j].Get_Connect())
+						//{
+							m_User[j].Set_Connect(false);
+							m_User[j].Set_ConnectSock(0);
 
-						epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
-						close(m_UserConnMng->m_Events[i].data.fd);
-						cout << "[+] Connection Closed < " << m_User[j].Get_ID() << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
-						break;
+							epoll_ctl(m_iEpfd, EPOLL_CTL_DEL, m_UserConnMng->m_Events[i].data.fd, NULL);
+							close(m_UserConnMng->m_Events[i].data.fd);
+							cout << "[+] Connection Closed < " << m_User[j].Get_ID() << " > FD Num ( " << m_UserConnMng->m_Events[i].data.fd << " )" << endl;
+							break;
+						//}
 					}
 				}
 			}

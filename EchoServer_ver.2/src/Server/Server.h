@@ -13,7 +13,7 @@
 #include <iostream>
 #include <pthread.h>
 
-#define USER_NUM 1000
+#define USER_NUM 800
 
 using namespace std;
 
@@ -34,6 +34,7 @@ public:
 private:
 	CUserMng* 		m_UserConnMng;
 	CUser			m_User[USER_NUM];
+	CUser			m_ErrClass;
 
 	struct sockaddr_in m_Client_Addr;
 
@@ -42,6 +43,7 @@ private:
 	int m_iEvent_Cnt = 0;
 	int m_iListen_Scok = 0;
 	int m_iConnect_Sock = 0;
+	int m_iCurUserCnt = 0;
 
 	int m_iSock_Len = 0;
 	int m_iClient_Fd = 0;
